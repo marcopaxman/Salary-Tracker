@@ -4,9 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.example.waiterwallet.ui.screens.DashboardScreen
-import com.example.waiterwallet.ui.screens.DataEntryScreen
-import com.example.waiterwallet.ui.screens.SettingsScreen
+import com.example.waiterwallet.ui.screens.MainScreen
 import com.example.waiterwallet.WelcomeScreen
 
 object Routes {
@@ -14,6 +12,8 @@ object Routes {
     const val Dashboard = "dashboard"
     const val Entry = "entry"
     const val Settings = "settings"
+    const val Calendar = "calendar"
+    const val Jobs = "jobs"
 }
 
 @Composable
@@ -27,16 +27,7 @@ fun AppNavHost(
             WelcomeScreen(onContinue = { navController.navigate(Routes.Dashboard) })
         }
         composable(Routes.Dashboard) {
-            DashboardScreen(onAddEntry = { navController.navigate(Routes.Entry) }, onOpenSettings = { navController.navigate(Routes.Settings) })
-        }
-        composable(Routes.Entry) {
-            DataEntryScreen(onSaved = {
-                onSaveEntry()
-                navController.popBackStack(Routes.Dashboard, false)
-            })
-        }
-        composable(Routes.Settings) {
-            SettingsScreen(onSaved = { navController.popBackStack() })
+            MainScreen(onSaveEntry = onSaveEntry)
         }
     }
 }

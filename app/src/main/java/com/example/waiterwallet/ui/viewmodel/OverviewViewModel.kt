@@ -18,6 +18,7 @@ class OverviewViewModel(
     fun totalTurnoverForMonth(date: LocalDate) = repo.totalTurnoverForMonth(date)
     fun estimateCommission(turnover: Double?, percent: Double) = (turnover ?: 0.0) * percent
     fun goalForMonth(date: LocalDate) = goalDao.goalForMonth(MonthlyGoal.key(YearMonth.from(date)))
+    fun entriesBetween(start: LocalDate, end: LocalDate) = repo.entriesBetween(start, end)
     val commissionPercent = settings.commissionPercent
 
     object Factory : ViewModelProvider.Factory {

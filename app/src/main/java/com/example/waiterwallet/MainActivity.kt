@@ -3,15 +3,23 @@ package com.example.waiterwallet
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Button
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.rememberNavController
@@ -40,20 +48,53 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun WelcomeScreen(onContinue: (() -> Unit)? = null) {
-    Column(modifier = Modifier.padding(24.dp)) {
-        Text(text = "Waiter Wallet", style = MaterialTheme.typography.headlineMedium)
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+        verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center
+    ) {
+        // Simple logo shape
+        androidx.compose.foundation.Canvas(
+            modifier = Modifier
+                .size(120.dp)
+                .padding(bottom = 24.dp)
+        ) {
+            // Circle background
+            drawCircle(
+                color = androidx.compose.ui.graphics.Color(0xFF009688), // Teal
+                radius = size.minDimension / 2
+            )
+            // Dollar sign representation
+            drawCircle(
+                color = androidx.compose.ui.graphics.Color.White,
+                radius = size.minDimension / 3,
+                center = center
+            )
+        }
+        
         Text(
-            text = "Track your turnover, tips & commission.",
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.padding(top = 12.dp)
+            text = "Waiter Wallet",
+            style = MaterialTheme.typography.headlineLarge,
+            color = MaterialTheme.colorScheme.primary
         )
         Text(
-            text = "Scaffold ready. Next: add navigation, data entry screens, calendar, and overview dashboard.",
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.padding(top = 24.dp)
+            text = "Track Your Tips & Earnings",
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(top = 8.dp),
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        Button(onClick = { onContinue?.invoke() }, modifier = Modifier.padding(top = 24.dp)) {
-            Text("Continue")
+        
+        androidx.compose.foundation.layout.Spacer(modifier = Modifier.height(48.dp))
+        
+        Button(
+            onClick = { onContinue?.invoke() },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
+        ) {
+            Text("Login", style = MaterialTheme.typography.titleMedium)
         }
     }
 }
