@@ -1,3 +1,37 @@
+# Gradle
+/.gradle
+/build
+/**/build
+
+# Local configuration
+local.properties
+
+# Android Studio / IntelliJ
+/.idea
+*.iml
+*.ipr
+*.iws
+
+# VS Code
+.vscode/
+
+# OS files
+Thumbs.db
+*.DS_Store
+
+# Logs
+*.log
+
+# Generated APK/AAB
+*.apk
+*.apks
+*.aab
+
+# Kotlin/Java
+out/
+
+# Crashlytics / Firebase (if added later)
+crashlytics-build.properties
 # Compiled class file
 *.class
 
