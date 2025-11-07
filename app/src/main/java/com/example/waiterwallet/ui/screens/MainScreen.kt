@@ -2,6 +2,7 @@ package com.example.waiterwallet.ui.screens
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
@@ -10,9 +11,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -22,6 +27,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.waiterwallet.ui.navigation.Routes
+import kotlinx.coroutines.launch
 
 data class BottomNavItem(
     val route: String,
@@ -39,8 +45,11 @@ val bottomNavItems = listOf(
 @Composable
 fun MainScreen(onSaveEntry: () -> Unit) {
     val navController = rememberNavController()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
     
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
             BottomNavigationBar(navController)
         }
@@ -52,20 +61,41 @@ fun MainScreen(onSaveEntry: () -> Unit) {
         ) {
             composable(Routes.Dashboard) {
                 DashboardScreen(
-                    onAddEntry = { navController.navigate(Routes.Entry) }
+                    onAddEntry = { navController.navigate(Routes.Entry) },
+                    onExportSuccess = { message ->
+                        scope.launch {
+                            snackbarHostState.showSnackbar(message)
+                        }
+                    }
                 )
             }
             composable(Routes.Calendar) {
                 CalendarScreen(onNavigateBack = {})
             }
             composable(Routes.Jobs) {
-                JobsScreen(onNavigateBack = {})
+                JobsScreen(
+                    onNavigateBack = {},
+                    onJobSaved = { message ->
+                        scope.launch {
+                            snackbarHostState.showSnackbar(message)
+                        }
+                    }
+                )
             }
             composable(Routes.Settings) {
-                SettingsScreen(onSaved = {})
+                SettingsScreen(
+                    onSaved = {
+                        scope.launch {
+                            snackbarHostState.showSnackbar("Settings saved successfully!")
+                        }
+                    }
+                )
             }
             composable(Routes.Entry) {
                 DataEntryScreen(onSaved = {
+                    scope.launch {
+                        snackbarHostState.showSnackbar("Entry saved successfully!")
+                    }
                     onSaveEntry()
                     navController.popBackStack()
                 })

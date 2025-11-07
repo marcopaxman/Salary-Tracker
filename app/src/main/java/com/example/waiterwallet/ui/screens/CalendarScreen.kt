@@ -17,11 +17,15 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -57,30 +61,54 @@ fun CalendarScreen(
     var selectedDate by remember { mutableStateOf<LocalDate?>(null) }
     val selectedEntry = selectedDate?.let { date -> entries.find { it.date == date } }
 
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        Text("Calendar - ${currentMonth.month.getDisplayName(TextStyle.FULL, Locale.getDefault())} ${currentMonth.year}",
-            style = MaterialTheme.typography.headlineSmall)
-        Spacer(Modifier.height(8.dp))
-        Button(onClick = onNavigateBack) { Text("Back to Dashboard") }
-        Spacer(Modifier.height(16.dp))
+    Column(modifier = Modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState())) {
+        // Header
+        Text(
+            "Calendar",
+            style = MaterialTheme.typography.headlineLarge,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+        Text(
+            "${currentMonth.month.getDisplayName(TextStyle.FULL, Locale.getDefault())} ${currentMonth.year}",
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
 
-        // Weekday headers
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-            listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat").forEach { day ->
-                Text(day, style = MaterialTheme.typography.labelSmall, modifier = Modifier.weight(1f), textAlign = TextAlign.Center)
-            }
-        }
-        Spacer(Modifier.height(8.dp))
+        ElevatedCard(
+            modifier = Modifier.fillMaxWidth(),
+            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                // Weekday headers
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                    listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat").forEach { day ->
+                        Text(
+                            day,
+                            style = MaterialTheme.typography.labelLarge,
+                            modifier = Modifier.weight(1f),
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+                Spacer(Modifier.height(12.dp))
 
-        // Month grid
-        val daysInMonth = generateCalendarDays(currentMonth)
-        LazyVerticalGrid(columns = GridCells.Fixed(7), modifier = Modifier.fillMaxWidth()) {
-            items(daysInMonth) { dateOrNull ->
-                if (dateOrNull != null) {
-                    val hasEntry = entries.any { it.date == dateOrNull }
-                    DayCell(date = dateOrNull, hasEntry = hasEntry, isToday = dateOrNull == today, onClick = { selectedDate = dateOrNull })
-                } else {
-                    Box(modifier = Modifier.aspectRatio(1f))
+                // Month grid
+                val daysInMonth = generateCalendarDays(currentMonth)
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(7),
+                    modifier = Modifier.fillMaxWidth().height(300.dp)
+                ) {
+                    items(daysInMonth) { dateOrNull ->
+                        if (dateOrNull != null) {
+                            val hasEntry = entries.any { it.date == dateOrNull }
+                            DayCell(date = dateOrNull, hasEntry = hasEntry, isToday = dateOrNull == today, onClick = { selectedDate = dateOrNull })
+                        } else {
+                            Box(modifier = Modifier.aspectRatio(1f))
+                        }
+                    }
                 }
             }
         }
@@ -123,20 +151,62 @@ fun DayCell(date: LocalDate, hasEntry: Boolean, isToday: Boolean, onClick: () ->
 fun EntryDetailDialog(entry: DailyEntry, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Entry for ${entry.date}") },
+        title = {
+            Text(
+                "Entry for ${entry.date}",
+                style = MaterialTheme.typography.headlineSmall
+            )
+        },
         text = {
-            Column {
-                Text("Turnover: R${"%.2f".format(entry.turnover)}")
-                Text("Tips Cash: R${"%.2f".format(entry.tipsCash ?: 0.0)}")
-                Text("Tips Card: R${"%.2f".format(entry.tipsCard ?: 0.0)}")
-                Text("Total Tips: R${"%.2f".format(entry.totalTips)}")
-                if (!entry.notes.isNullOrBlank()) {
-                    Spacer(Modifier.height(8.dp))
-                    Text("Notes: ${entry.notes}", style = MaterialTheme.typography.bodySmall)
+            ElevatedCard(
+                modifier = Modifier.fillMaxWidth(),
+                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Turnover:", style = MaterialTheme.typography.bodyLarge)
+                        Text("R${"%.2f".format(entry.turnover)}", style = MaterialTheme.typography.titleMedium)
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Tips Cash:", style = MaterialTheme.typography.bodyLarge)
+                        Text("R${"%.2f".format(entry.tipsCash ?: 0.0)}", style = MaterialTheme.typography.titleMedium)
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Tips Card:", style = MaterialTheme.typography.bodyLarge)
+                        Text("R${"%.2f".format(entry.tipsCard ?: 0.0)}", style = MaterialTheme.typography.titleMedium)
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Total Tips:", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.primary)
+                        Text("R${"%.2f".format(entry.totalTips)}", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary)
+                    }
+                    if (!entry.notes.isNullOrBlank()) {
+                        Spacer(Modifier.height(12.dp))
+                        Text("Notes:", style = MaterialTheme.typography.labelLarge)
+                        Text(entry.notes, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                 }
             }
         },
-        confirmButton = { TextButton(onClick = onDismiss) { Text("Close") } }
+        confirmButton = {
+            Button(
+                onClick = onDismiss,
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text("Close")
+            }
+        }
     )
 }
 

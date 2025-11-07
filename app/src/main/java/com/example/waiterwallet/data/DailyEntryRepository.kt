@@ -22,6 +22,20 @@ class DailyEntryRepository(private val dao: DailyEntryDao) {
         return dao.totalTurnoverForMonth(start, end)
     }
 
+    // Job-filtered methods
+    fun entriesBetweenForJob(start: LocalDate, end: LocalDate, jobId: Long): Flow<List<DailyEntry>> =
+        dao.entriesBetweenForJob(start, end, jobId)
+
+    fun totalTipsForMonthByJob(date: LocalDate, jobId: Long): Flow<Double?> {
+        val (start, end) = monthRange(date)
+        return dao.totalTipsForMonthByJob(start, end, jobId)
+    }
+
+    fun totalTurnoverForMonthByJob(date: LocalDate, jobId: Long): Flow<Double?> {
+        val (start, end) = monthRange(date)
+        return dao.totalTurnoverForMonthByJob(start, end, jobId)
+    }
+
     companion object {
         fun monthRange(anchor: LocalDate): Pair<LocalDate, LocalDate> {
             val start = anchor.withDayOfMonth(1)

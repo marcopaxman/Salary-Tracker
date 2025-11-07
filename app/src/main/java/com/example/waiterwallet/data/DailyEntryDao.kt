@@ -25,6 +25,16 @@ interface DailyEntryDao {
     @Query("SELECT SUM(turnover) FROM daily_entries WHERE date BETWEEN :start AND :end")
     fun totalTurnoverForMonth(start: LocalDate, end: LocalDate): Flow<Double?>
 
+    // Job-filtered queries
+    @Query("SELECT * FROM daily_entries WHERE date BETWEEN :start AND :end AND jobId = :jobId ORDER BY date ASC")
+    fun entriesBetweenForJob(start: LocalDate, end: LocalDate, jobId: Long): Flow<List<DailyEntry>>
+
+    @Query("SELECT SUM(COALESCE(tipsCash,0) + COALESCE(tipsCard,0)) FROM daily_entries WHERE date BETWEEN :start AND :end AND jobId = :jobId")
+    fun totalTipsForMonthByJob(start: LocalDate, end: LocalDate, jobId: Long): Flow<Double?>
+
+    @Query("SELECT SUM(turnover) FROM daily_entries WHERE date BETWEEN :start AND :end AND jobId = :jobId")
+    fun totalTurnoverForMonthByJob(start: LocalDate, end: LocalDate, jobId: Long): Flow<Double?>
+
     @Delete
     suspend fun delete(entry: DailyEntry)
 }

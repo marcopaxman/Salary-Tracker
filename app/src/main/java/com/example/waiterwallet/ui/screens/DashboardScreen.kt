@@ -16,20 +16,31 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -49,9 +60,11 @@ import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
     onAddEntry: () -> Unit,
+    onExportSuccess: (String) -> Unit = {},
     vm: OverviewViewModel = viewModel(factory = OverviewViewModel.Factory),
     jobsVm: JobsViewModel = viewModel(factory = JobsViewModel.Factory)
 ) {
@@ -60,9 +73,14 @@ fun DashboardScreen(
     val today = LocalDate.now()
     val currentMonth = YearMonth.from(today)
     
-    val totalTipsNullable by vm.totalTipsForMonth(today).collectAsState(initial = 0.0)
+    // Job filter state
+    val jobs by jobsVm.allJobs.collectAsState(initial = emptyList())
+    var selectedJobId by remember { mutableStateOf<Long?>(null) }
+    var jobDropdownExpanded by remember { mutableStateOf(false) }
+    
+    val totalTipsNullable by vm.totalTipsForMonth(today, selectedJobId).collectAsState(initial = 0.0)
     val totalTips = totalTipsNullable ?: 0.0
-    val totalTurnover by vm.totalTurnoverForMonth(today).collectAsState(initial = 0.0)
+    val totalTurnover by vm.totalTurnoverForMonth(today, selectedJobId).collectAsState(initial = 0.0)
     val commissionPercent by vm.commissionPercent.collectAsState(initial = 0.01)
     val estimatedCommission = vm.estimateCommission(totalTurnover, commissionPercent)
     val goal by vm.goalForMonth(today).collectAsState(initial = null)
@@ -71,12 +89,11 @@ fun DashboardScreen(
     
     // Get last 7 days of entries for chart
     val sevenDaysAgo = today.minusDays(6)
-    val weekEntries by vm.entriesBetween(sevenDaysAgo, today).collectAsState(initial = emptyList())
+    val weekEntries by vm.entriesBetween(sevenDaysAgo, today, selectedJobId).collectAsState(initial = emptyList())
     
     // Get month entries for export
     val (monthStart, monthEnd) = com.example.waiterwallet.data.DailyEntryRepository.monthRange(today)
     val monthEntries by vm.entriesBetween(monthStart, monthEnd).collectAsState(initial = emptyList())
-    val jobs by jobsVm.allJobs.collectAsState(initial = emptyList())
 
     Column(
         modifier = Modifier
@@ -96,6 +113,69 @@ fun DashboardScreen(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(bottom = 16.dp)
         )
+        
+        // Job Filter
+        if (jobs.isNotEmpty()) {
+            ElevatedCard(
+                modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "Filter by Job",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Icon(
+                            Icons.Default.Menu,
+                            contentDescription = "Filter",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    ExposedDropdownMenuBox(
+                        expanded = jobDropdownExpanded,
+                        onExpandedChange = { jobDropdownExpanded = it }
+                    ) {
+                        OutlinedTextField(
+                            value = jobs.find { it.id == selectedJobId }?.name ?: "All Jobs",
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Select Job") },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = jobDropdownExpanded) },
+                            modifier = Modifier.fillMaxWidth().menuAnchor(),
+                            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
+                        )
+                        ExposedDropdownMenu(
+                            expanded = jobDropdownExpanded,
+                            onDismissRequest = { jobDropdownExpanded = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("All Jobs") },
+                                onClick = {
+                                    selectedJobId = null
+                                    jobDropdownExpanded = false
+                                }
+                            )
+                            jobs.forEach { job ->
+                                DropdownMenuItem(
+                                    text = { Text(job.name) },
+                                    onClick = {
+                                        selectedJobId = job.id
+                                        jobDropdownExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
         
         // Monthly Summary Card
         ElevatedCard(
@@ -247,6 +327,7 @@ fun DashboardScreen(
                     val file = CsvExporter.exportToCSV(context, monthEntries, jobs, currentMonth.toString())
                     if (file != null) {
                         CsvExporter.shareCSV(context, file)
+                        onExportSuccess("Data exported successfully!")
                     } else {
                         Toast.makeText(context, "Export failed", Toast.LENGTH_SHORT).show()
                     }

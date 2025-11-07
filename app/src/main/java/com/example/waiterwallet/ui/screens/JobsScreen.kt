@@ -11,6 +11,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
@@ -18,6 +21,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -34,6 +38,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.waiterwallet.data.Job
@@ -42,6 +48,7 @@ import com.example.waiterwallet.ui.viewmodel.JobsViewModel
 @Composable
 fun JobsScreen(
     onNavigateBack: () -> Unit,
+    onJobSaved: (String) -> Unit = {},
     vm: JobsViewModel = viewModel(factory = JobsViewModel.Factory)
 ) {
     val jobs by vm.allJobs.collectAsState(initial = emptyList())
@@ -61,24 +68,52 @@ fun JobsScreen(
                 .padding(padding)
                 .padding(16.dp)
         ) {
-            Text("Manage Jobs", style = MaterialTheme.typography.headlineSmall)
-            Spacer(Modifier.height(8.dp))
-            Button(onClick = onNavigateBack) { Text("Back to Dashboard") }
-            Spacer(Modifier.height(16.dp))
+            // Header
+            Text(
+                "Manage Jobs",
+                style = MaterialTheme.typography.headlineLarge,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            Text(
+                "Track earnings by workplace",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
 
             if (jobs.isEmpty()) {
-                Text(
-                    "No jobs added yet. Tap + to add your first job.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(16.dp)
-                )
+                ElevatedCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(32.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            "No jobs added yet",
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            "Tap + to add your first job",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
             } else {
-                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     items(jobs) { job ->
                         JobCard(
                             job = job,
                             onEdit = { editingJob = job },
-                            onDelete = { vm.deleteJob(job) }
+                            onDelete = {
+                                vm.deleteJob(job)
+                                onJobSaved("Job deleted successfully")
+                            }
                         )
                     }
                 }
@@ -94,6 +129,7 @@ fun JobsScreen(
             onSave = { name ->
                 vm.addJob(name)
                 showAddDialog = false
+                onJobSaved("Job '$name' created successfully!")
             }
         )
     }
@@ -105,6 +141,7 @@ fun JobsScreen(
             onSave = { name ->
                 vm.updateJob(editingJob!!.copy(name = name))
                 editingJob = null
+                onJobSaved("Job updated successfully!")
             }
         )
     }
@@ -112,22 +149,30 @@ fun JobsScreen(
 
 @Composable
 fun JobCard(job: Job, onEdit: () -> Unit, onDelete: () -> Unit) {
-    Card(
+    ElevatedCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onEdit),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(20.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(job.name, style = MaterialTheme.typography.titleMedium)
+            Text(
+                job.name,
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface
+            )
             IconButton(onClick = onDelete) {
-                Icon(Icons.Default.Delete, contentDescription = "Delete Job")
+                Icon(
+                    Icons.Default.Delete,
+                    contentDescription = "Delete Job",
+                    tint = MaterialTheme.colorScheme.error
+                )
             }
         }
     }
@@ -135,11 +180,17 @@ fun JobCard(job: Job, onEdit: () -> Unit, onDelete: () -> Unit) {
 
 @Composable
 fun JobDialog(job: Job?, onDismiss: () -> Unit, onSave: (String) -> Unit) {
+    val focusManager = LocalFocusManager.current
     var jobName by remember { mutableStateOf(job?.name ?: "") }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (job == null) "Add Job" else "Edit Job") },
+        title = {
+            Text(
+                if (job == null) "Add Job" else "Edit Job",
+                style = MaterialTheme.typography.headlineSmall
+            )
+        },
         text = {
             Column {
                 OutlinedTextField(
@@ -147,20 +198,33 @@ fun JobDialog(job: Job?, onDismiss: () -> Unit, onSave: (String) -> Unit) {
                     onValueChange = { jobName = it },
                     label = { Text("Job Name") },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(
+                        imeAction = ImeAction.Done
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            focusManager.clearFocus()
+                            if (jobName.isNotBlank()) onSave(jobName)
+                        }
+                    )
                 )
             }
         },
         confirmButton = {
-            TextButton(
+            Button(
                 onClick = { if (jobName.isNotBlank()) onSave(jobName) },
-                enabled = jobName.isNotBlank()
+                enabled = jobName.isNotBlank(),
+                shape = RoundedCornerShape(8.dp)
             ) {
                 Text("Save")
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(
+                onClick = onDismiss,
+                shape = RoundedCornerShape(8.dp)
+            ) {
                 Text("Cancel")
             }
         }
