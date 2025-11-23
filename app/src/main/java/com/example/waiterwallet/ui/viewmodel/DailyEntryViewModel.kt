@@ -7,9 +7,10 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.waiterwallet.WaiterWalletApp
 import com.example.waiterwallet.data.DailyEntry
-import com.example.waiterwallet.data.DailyEntryRepository
 import com.example.waiterwallet.data.MonthlyGoal
 import com.example.waiterwallet.data.MonthlyGoalDao
+import com.example.waiterwallet.data.UnifiedRepository
+import com.example.waiterwallet.data.UnifiedRepositoryFactory
 import com.example.waiterwallet.utils.GoalNotificationHelper
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -17,7 +18,7 @@ import java.time.LocalDate
 import java.time.YearMonth
 
 class DailyEntryViewModel(
-    private val repo: DailyEntryRepository,
+    private val unifiedRepo: UnifiedRepository,
     private val goalDao: MonthlyGoalDao,
     application: Application
 ) : AndroidViewModel(application) {
@@ -39,7 +40,7 @@ class DailyEntryViewModel(
                 notes = notes,
                 jobId = jobId
             )
-            repo.upsert(entry)
+            unifiedRepo.upsertEntry(entry)
             
             // Check if goal is reached after saving
             checkGoalProgress()
@@ -52,7 +53,7 @@ class DailyEntryViewModel(
         val goal = goalDao.goalForMonth(goalKey).first()
         
         if (goal != null && goal.goalTips > 0) {
-            val totalTips = repo.totalTipsForMonth(today).first() ?: 0.0
+            val totalTips = unifiedRepo.totalTipsForMonth(today).first() ?: 0.0
             val percentage = ((totalTips / goal.goalTips) * 100).toInt()
             
             // Notify on 100% achievement
@@ -79,9 +80,9 @@ class DailyEntryViewModel(
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             val app = WaiterWalletAppHolder.app
             val db = app.database
-            val repo = DailyEntryRepository(db.dailyEntryDao())
+            val unifiedRepo = UnifiedRepositoryFactory.getInstance(app)
             @Suppress("UNCHECKED_CAST")
-            return DailyEntryViewModel(repo, db.goalDao(), app) as T
+            return DailyEntryViewModel(unifiedRepo, db.goalDao(), app) as T
         }
     }
 }

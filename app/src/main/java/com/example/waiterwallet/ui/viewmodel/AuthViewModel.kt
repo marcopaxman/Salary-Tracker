@@ -1,14 +1,22 @@
 package com.example.waiterwallet.ui.viewmodel
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import android.util.Log
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.waiterwallet.data.AppDatabase
+import com.example.waiterwallet.data.UnifiedRepositoryFactory
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
+import java.time.LocalDate
 
 sealed class AuthState {
     object Loading : AuthState()
@@ -17,7 +25,11 @@ sealed class AuthState {
     data class Error(val message: String) : AuthState()
 }
 
-class AuthViewModel : ViewModel() {
+class AuthViewModel(application: Application) : AndroidViewModel(application) {
+    companion object {
+        private const val TAG = "AuthViewModel"
+    }
+    
     private val auth: FirebaseAuth = Firebase.auth
     
     private val _authState = MutableStateFlow<AuthState>(AuthState.Loading)
@@ -71,8 +83,42 @@ class AuthViewModel : ViewModel() {
     }
     
     fun signOut() {
-        auth.signOut()
-        _authState.value = AuthState.Unauthenticated
+        viewModelScope.launch {
+            try {
+                Log.d(TAG, "Starting sign out process...")
+                
+                // First, clear UnifiedRepository singleton to stop any ongoing syncs
+                UnifiedRepositoryFactory.clearInstance()
+                Log.d(TAG, "Cleared UnifiedRepository singleton")
+                
+                // Clear Room database on IO thread
+                withContext(Dispatchers.IO) {
+                    val database = AppDatabase.getInstance(getApplication())
+                    database.clearAllTables()
+                    Log.d(TAG, "Cleared Room database tables")
+                    
+                    // Verify tables are actually empty
+                    val entryCount = database.dailyEntryDao().entriesBetween(
+                        LocalDate.MIN,
+                        LocalDate.MAX
+                    ).first().size
+                    Log.d(TAG, "Verification: Room has $entryCount entries after clearing")
+                }
+                
+                // Sign out from Firebase
+                auth.signOut()
+                Log.d(TAG, "Signed out from Firebase")
+                
+                _authState.value = AuthState.Unauthenticated
+                
+            } catch (e: Exception) {
+                Log.e(TAG, "Error during sign out", e)
+                // Still sign out even if clearing fails
+                UnifiedRepositoryFactory.clearInstance()
+                auth.signOut()
+                _authState.value = AuthState.Unauthenticated
+            }
+        }
     }
     
     fun clearError() {
