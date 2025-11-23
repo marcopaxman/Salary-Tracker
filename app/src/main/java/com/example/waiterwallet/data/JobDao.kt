@@ -20,4 +20,10 @@ interface JobDao {
 
     @Query("SELECT * FROM jobs WHERE id = :id")
     fun jobById(id: Long): Flow<Job?>
+    
+    @Query("SELECT * FROM jobs ORDER BY name ASC")
+    suspend fun allJobsSync(): List<Job>
+    
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insert(job: Job): Long
 }

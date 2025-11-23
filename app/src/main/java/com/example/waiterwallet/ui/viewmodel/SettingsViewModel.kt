@@ -9,6 +9,8 @@ import com.example.waiterwallet.WaiterWalletApp
 import com.example.waiterwallet.data.MonthlyGoal
 import com.example.waiterwallet.data.MonthlyGoalDao
 import com.example.waiterwallet.data.SettingsStore
+import com.example.waiterwallet.data.UnifiedRepository
+import com.example.waiterwallet.data.UnifiedRepositoryFactory
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -17,14 +19,14 @@ import java.time.YearMonth
 
 class SettingsViewModel(
     private val store: SettingsStore,
-    private val goalDao: MonthlyGoalDao,
+    private val unifiedRepo: UnifiedRepository,
     app: Application
 ) : AndroidViewModel(app) {
     val commissionPercent: Flow<Double> = store.commissionPercent
     val reminderEnabled: Flow<Boolean> = store.reminderEnabled
     val reminderTime: Flow<LocalTime> = store.reminderTime
 
-    fun goalForMonth(date: LocalDate) = goalDao.goalForMonth(MonthlyGoal.key(YearMonth.from(date)))
+    fun goalForMonth(date: LocalDate) = unifiedRepo.goalForMonth(MonthlyGoal.key(YearMonth.from(date)))
 
     fun saveSettings(pct: Double, enabled: Boolean, time: LocalTime) {
         viewModelScope.launch {
@@ -43,16 +45,16 @@ class SettingsViewModel(
         viewModelScope.launch {
             val ym = YearMonth.from(date)
             val key = MonthlyGoal.key(ym)
-            goalDao.upsert(MonthlyGoal(yearMonth = key, goalTips = goalTipsAmount, commissionPercent = commissionPercent))
+            unifiedRepo.upsertGoal(MonthlyGoal(yearMonth = key, goalTips = goalTipsAmount, commissionPercent = commissionPercent))
         }
     }
 
     object Factory : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             val app = WaiterWalletAppHolder.app
-            val db = app.database
+            val unifiedRepo = UnifiedRepositoryFactory.getInstance(app)
             @Suppress("UNCHECKED_CAST")
-            return SettingsViewModel(SettingsStore(app), db.goalDao(), app) as T
+            return SettingsViewModel(SettingsStore(app), unifiedRepo, app) as T
         }
     }
 }
