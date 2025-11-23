@@ -13,12 +13,14 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -35,12 +37,17 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.waiterwallet.ui.viewmodel.AuthViewModel
 import com.example.waiterwallet.ui.viewmodel.SettingsViewModel
 import java.time.LocalDate
 import java.time.LocalTime
 
 @Composable
-fun SettingsScreen(onSaved: () -> Unit, vm: SettingsViewModel = viewModel(factory = SettingsViewModel.Factory)) {
+fun SettingsScreen(
+    onSaved: () -> Unit, 
+    vm: SettingsViewModel = viewModel(factory = SettingsViewModel.Factory),
+    authViewModel: AuthViewModel
+) {
     val focusManager = LocalFocusManager.current
     val commission by vm.commissionPercent.collectAsState(initial = 0.01)
     val reminderEnabled by vm.reminderEnabled.collectAsState(initial = true)
@@ -201,6 +208,55 @@ fun SettingsScreen(onSaved: () -> Unit, vm: SettingsViewModel = viewModel(factor
         ) {
             Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.padding(end = 8.dp))
             Text("Save All Settings", style = MaterialTheme.typography.titleMedium)
+        }
+        
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        // Account Section
+        ElevatedCard(
+            modifier = Modifier.fillMaxWidth(),
+            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
+        ) {
+            Column(modifier = Modifier.padding(20.dp)) {
+                Text(
+                    "Account",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
+                
+                val authState by authViewModel.authState.collectAsState()
+                val userEmail = if (authState is com.example.waiterwallet.ui.viewmodel.AuthState.Authenticated) {
+                    (authState as com.example.waiterwallet.ui.viewmodel.AuthState.Authenticated).email ?: "Not available"
+                } else {
+                    "Not signed in"
+                }
+                
+                Text(
+                    "Signed in as:",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    userEmail,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+                
+                OutlinedButton(
+                    onClick = { authViewModel.signOut() },
+                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(
+                        Icons.Default.ExitToApp, 
+                        contentDescription = null, 
+                        modifier = Modifier.padding(end = 8.dp)
+                    )
+                    Text("Sign Out", style = MaterialTheme.typography.titleMedium)
+                }
+            }
         }
     }
 }

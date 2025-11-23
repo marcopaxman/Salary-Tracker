@@ -62,6 +62,7 @@ android {
 dependencies {
     // Compose BOM to align versions
     implementation(platform("androidx.compose:compose-bom:2024.09.02"))
+    
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling-preview")
@@ -111,4 +112,18 @@ dependencies {
     androidTestImplementation(platform("androidx.compose:compose-bom:2024.09.02"))
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+    
+    // Firebase dependencies with explicit versions (Firebase BOM 34.6.0)
+    implementation("com.google.firebase:firebase-auth-ktx:23.1.0")
+    implementation("com.google.firebase:firebase-firestore-ktx:25.1.1")
+    implementation("com.google.firebase:firebase-analytics-ktx:22.1.2")
+    
+    // Play Services for Google Sign-In
+    implementation("com.google.android.gms:play-services-auth:21.2.0")
+    
+    // Coroutines support for Firebase
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
 }
+
+// Apply Google Services plugin at the end to process google-services.json
+apply(plugin = "com.google.gms.google-services")

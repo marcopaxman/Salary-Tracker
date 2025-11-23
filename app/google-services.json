@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "223346959208",
+    "project_id": "salary-tracker-c41cc",
+    "storage_bucket": "salary-tracker-c41cc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:223346959208:android:59a7ef9b0498a39c8becdd",
+        "android_client_info": {
+          "package_name": "com.example.waiterwallet"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD6GjC_BRWlJqNyjjqyaSUl5np2tvMdWfU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

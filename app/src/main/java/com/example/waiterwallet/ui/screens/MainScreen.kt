@@ -7,6 +7,7 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -27,6 +28,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.waiterwallet.ui.navigation.Routes
+import com.example.waiterwallet.ui.viewmodel.AuthViewModel
 import kotlinx.coroutines.launch
 
 data class BottomNavItem(
@@ -39,11 +41,15 @@ val bottomNavItems = listOf(
     BottomNavItem(Routes.Dashboard, "Dashboard", Icons.Default.Home),
     BottomNavItem(Routes.Calendar, "Calendar", Icons.Default.DateRange),
     BottomNavItem(Routes.Jobs, "Jobs", Icons.Default.Person),
+    BottomNavItem(Routes.FirebaseTest, "Test", Icons.Default.Build), // Remove in production
     BottomNavItem(Routes.Settings, "Settings", Icons.Default.Settings)
 )
 
 @Composable
-fun MainScreen(onSaveEntry: () -> Unit) {
+fun MainScreen(
+    onSaveEntry: () -> Unit,
+    authViewModel: AuthViewModel
+) {
     val navController = rememberNavController()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -88,8 +94,12 @@ fun MainScreen(onSaveEntry: () -> Unit) {
                         scope.launch {
                             snackbarHostState.showSnackbar("Settings saved successfully!")
                         }
-                    }
+                    },
+                    authViewModel = authViewModel
                 )
+            }
+            composable(Routes.FirebaseTest) {
+                FirebaseTestScreen()
             }
             composable(Routes.Entry) {
                 DataEntryScreen(onSaved = {
