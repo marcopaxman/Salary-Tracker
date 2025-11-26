@@ -36,6 +36,17 @@ class DailyEntryRepository(private val dao: DailyEntryDao) {
         return dao.totalTurnoverForMonthByJob(start, end, jobId)
     }
 
+    // Hourly wage methods
+    fun totalHoursWorkedForMonth(date: LocalDate): Flow<Double?> {
+        val (start, end) = monthRange(date)
+        return dao.totalHoursWorkedForMonth(start, end)
+    }
+
+    fun totalHoursWorkedForMonthByJob(date: LocalDate, jobId: Long): Flow<Double?> {
+        val (start, end) = monthRange(date)
+        return dao.totalHoursWorkedForMonthByJob(start, end, jobId)
+    }
+
     companion object {
         fun monthRange(anchor: LocalDate): Pair<LocalDate, LocalDate> {
             val start = anchor.withDayOfMonth(1)

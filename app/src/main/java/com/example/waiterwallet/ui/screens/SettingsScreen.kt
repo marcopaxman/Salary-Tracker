@@ -52,10 +52,12 @@ fun SettingsScreen(
     val commission by vm.commissionPercent.collectAsState(initial = 0.01)
     val reminderEnabled by vm.reminderEnabled.collectAsState(initial = true)
     val reminderTime by vm.reminderTime.collectAsState(initial = LocalTime.of(22, 0))
+    val hourlyRate by vm.hourlyRate.collectAsState(initial = 0.0)
     val today = LocalDate.now()
     val currentGoal by vm.goalForMonth(today).collectAsState(initial = null)
 
     var commissionText by remember(commission) { mutableStateOf((commission * 100).toString()) }
+    var hourlyRateText by remember(hourlyRate) { mutableStateOf(if (hourlyRate > 0) hourlyRate.toString() else "") }
     var hourText by remember(reminderTime) { mutableStateOf(reminderTime.hour.toString()) }
     var minuteText by remember(reminderTime) { mutableStateOf(reminderTime.minute.toString()) }
     var reminders by remember(reminderEnabled) { mutableStateOf(reminderEnabled) }
@@ -100,6 +102,35 @@ fun SettingsScreen(
                     modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Number,
+                        imeAction = ImeAction.Done
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onDone = { focusManager.clearFocus() }
+                    )
+                )
+            }
+        }
+        
+        // Hourly Wage Section
+        ElevatedCard(
+            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
+        ) {
+            Column(modifier = Modifier.padding(20.dp)) {
+                Text(
+                    "Hourly Wage Settings",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
+                OutlinedTextField(
+                    value = hourlyRateText,
+                    onValueChange = { hourlyRateText = it },
+                    label = { Text("Hourly Rate (R)") },
+                    supportingText = { Text("Your earnings per hour (e.g., 25 for R25/hour)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Decimal,
                         imeAction = ImeAction.Done
                     ),
                     keyboardActions = KeyboardActions(
@@ -196,8 +227,9 @@ fun SettingsScreen(
                 val hour = hourText.toIntOrNull()?.coerceIn(0, 23) ?: 22
                 val minute = minuteText.toIntOrNull()?.coerceIn(0, 59) ?: 0
                 val goalAmount = goalText.toDoubleOrNull() ?: 0.0
+                val rate = hourlyRateText.toDoubleOrNull() ?: 0.0
                 
-                vm.saveSettings(pct, reminders, LocalTime.of(hour, minute))
+                vm.saveSettings(pct, reminders, LocalTime.of(hour, minute), rate)
                 if (goalAmount > 0) {
                     vm.saveMonthlyGoal(today, goalAmount, pct)
                 }

@@ -29,7 +29,8 @@ class DailyEntryViewModel(
         tipsCash: Double?,
         tipsCard: Double?,
         notes: String?,
-        jobId: Long? = null
+        jobId: Long? = null,
+        hoursWorked: Double? = null
     ) {
         viewModelScope.launch {
             val entry = DailyEntry(
@@ -38,7 +39,8 @@ class DailyEntryViewModel(
                 tipsCash = tipsCash,
                 tipsCard = tipsCard,
                 notes = notes,
-                jobId = jobId
+                jobId = jobId,
+                hoursWorked = hoursWorked
             )
             unifiedRepo.upsertEntry(entry)
             

@@ -31,6 +31,9 @@ data class FirestoreDailyEntry(
     @PropertyName("jobId")
     val jobId: String? = null,
     
+    @PropertyName("hoursWorked")
+    val hoursWorked: Double? = null,
+    
     @PropertyName("createdAt")
     val createdAt: Long = System.currentTimeMillis(),
     
@@ -46,6 +49,7 @@ data class FirestoreDailyEntry(
         tipsCard = null,
         notes = null,
         jobId = null,
+        hoursWorked = null,
         createdAt = System.currentTimeMillis(),
         updatedAt = System.currentTimeMillis()
     )
@@ -60,7 +64,8 @@ data class FirestoreDailyEntry(
             tipsCash = tipsCash,
             tipsCard = tipsCard,
             notes = notes,
-            jobId = jobId?.toLongOrNull()
+            jobId = jobId?.toLongOrNull(),
+            hoursWorked = hoursWorked
         )
     }
     
@@ -78,6 +83,7 @@ data class FirestoreDailyEntry(
                 tipsCard = entry.tipsCard,
                 notes = entry.notes,
                 jobId = entry.jobId?.toString(),
+                hoursWorked = entry.hoursWorked,
                 updatedAt = System.currentTimeMillis()
             )
         }

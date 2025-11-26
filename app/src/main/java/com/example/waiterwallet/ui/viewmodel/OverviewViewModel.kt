@@ -24,6 +24,10 @@ class OverviewViewModel(
         if (jobId == null) unifiedRepo.totalTurnoverForMonth(date)
         else unifiedRepo.totalTurnoverForMonthByJob(date, jobId)
     
+    fun totalHoursWorkedForMonth(date: LocalDate, jobId: Long? = null) =
+        if (jobId == null) unifiedRepo.totalHoursWorkedForMonth(date)
+        else unifiedRepo.totalHoursWorkedForMonthByJob(date, jobId)
+    
     fun estimateCommission(turnover: Double?, percent: Double) = (turnover ?: 0.0) * percent
     fun goalForMonth(date: LocalDate) = goalDao.goalForMonth(MonthlyGoal.key(YearMonth.from(date)))
     
@@ -32,6 +36,7 @@ class OverviewViewModel(
         else unifiedRepo.entriesBetweenForJob(start, end, jobId)
     
     val commissionPercent = settings.commissionPercent
+    val hourlyRate = settings.hourlyRate
 
     object Factory : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {

@@ -208,6 +208,20 @@ class UnifiedRepository(
         return roomEntryRepo.totalTurnoverForMonthByJob(date, jobId)
     }
     
+    /**
+     * Get total hours worked for a month
+     */
+    fun totalHoursWorkedForMonth(date: LocalDate): Flow<Double?> {
+        return roomEntryRepo.totalHoursWorkedForMonth(date)
+    }
+    
+    /**
+     * Get total hours worked for a month by job
+     */
+    fun totalHoursWorkedForMonthByJob(date: LocalDate, jobId: Long): Flow<Double?> {
+        return roomEntryRepo.totalHoursWorkedForMonthByJob(date, jobId)
+    }
+    
     // ========================== Jobs ==========================
     
     /**

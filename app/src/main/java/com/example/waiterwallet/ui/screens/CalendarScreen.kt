@@ -57,6 +57,7 @@ fun CalendarScreen(
     val today = LocalDate.now()
     val currentMonth = YearMonth.from(today)
     val entries by vm.entriesForMonth(today).collectAsState(initial = emptyList())
+    val hourlyRate by vm.hourlyRate.collectAsState(initial = 0.0)
     
     var selectedDate by remember { mutableStateOf<LocalDate?>(null) }
     val selectedEntry = selectedDate?.let { date -> entries.find { it.date == date } }
@@ -115,7 +116,7 @@ fun CalendarScreen(
 
         // Detail dialog
         if (selectedEntry != null) {
-            EntryDetailDialog(entry = selectedEntry!!, onDismiss = { selectedDate = null })
+            EntryDetailDialog(entry = selectedEntry!!, hourlyRate = hourlyRate, onDismiss = { selectedDate = null })
         } else if (selectedDate != null) {
             EmptyEntryDialog(date = selectedDate!!, onDismiss = { selectedDate = null })
         }
@@ -148,7 +149,7 @@ fun DayCell(date: LocalDate, hasEntry: Boolean, isToday: Boolean, onClick: () ->
 }
 
 @Composable
-fun EntryDetailDialog(entry: DailyEntry, onDismiss: () -> Unit) {
+fun EntryDetailDialog(entry: DailyEntry, hourlyRate: Double, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
@@ -191,6 +192,29 @@ fun EntryDetailDialog(entry: DailyEntry, onDismiss: () -> Unit) {
                         Text("Total Tips:", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.primary)
                         Text("R${"%.2f".format(entry.totalTips)}", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary)
                     }
+                    
+                    // Hours Worked and Hourly Wage
+                    if (entry.hoursWorked != null && entry.hoursWorked > 0) {
+                        Spacer(Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("Hours Worked:", style = MaterialTheme.typography.bodyLarge)
+                            Text("${"%.1f".format(entry.hoursWorked)} hrs", style = MaterialTheme.typography.titleMedium)
+                        }
+                        if (hourlyRate > 0) {
+                            val hourlyWage = entry.calculateHourlyWage(hourlyRate)
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("Hourly Wage:", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.secondary)
+                                Text("R${"%.2f".format(hourlyWage)}", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.secondary)
+                            }
+                        }
+                    }
+                    
                     if (!entry.notes.isNullOrBlank()) {
                         Spacer(Modifier.height(12.dp))
                         Text("Notes:", style = MaterialTheme.typography.labelLarge)

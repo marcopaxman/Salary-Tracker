@@ -18,6 +18,7 @@ object SettingsKeys {
     val REMINDER_ENABLED = booleanPreferencesKey("reminder_enabled")
     val REMINDER_HOUR = intPreferencesKey("reminder_hour")
     val REMINDER_MINUTE = intPreferencesKey("reminder_minute")
+    val HOURLY_RATE = doublePreferencesKey("hourly_rate")
 }
 
 class SettingsStore(private val context: Context) {
@@ -28,9 +29,14 @@ class SettingsStore(private val context: Context) {
         val m = it[SettingsKeys.REMINDER_MINUTE] ?: 0
         LocalTime.of(h, m)
     }
+    val hourlyRate: Flow<Double> = context.dataStore.data.map { it[SettingsKeys.HOURLY_RATE] ?: 0.0 }
 
     suspend fun setCommissionPercent(value: Double) {
         context.dataStore.edit { it[SettingsKeys.COMMISSION_PERCENT] = value }
+    }
+    
+    suspend fun setHourlyRate(value: Double) {
+        context.dataStore.edit { it[SettingsKeys.HOURLY_RATE] = value }
     }
 
     suspend fun setReminder(enabled: Boolean, time: LocalTime) {
