@@ -56,6 +56,16 @@ The application will provide a user-friendly interface for waiters to input thei
 *   **FR-016:** At the end of each month, users shall be able to enter their total commission received.
 *   **FR-017:** The input field for commission shall accept numeric values.
 
+**3.3. Hourly Wage Tracking**
+
+*   **FR-033:** Users shall be able to configure their hourly rate in the Settings screen.
+*   **FR-034:** The hourly rate input shall accept numeric values greater than zero (R$/hour).
+*   **FR-035:** When adding a daily entry, users shall be able to optionally input the number of hours worked for that day.
+*   **FR-036:** The hours worked input shall only accept positive numeric values greater than zero; zero or negative values shall be rejected with an appropriate error message.
+*   **FR-037:** The system shall automatically calculate the daily hourly wage by multiplying hours worked by the configured hourly rate.
+*   **FR-038:** The calculated hourly wage shall be displayed on the entry detail view alongside tips and turnover.
+*   **FR-039:** The system shall calculate and display the total hourly wages for the current month on the dashboard.
+
 ### 4. Earnings Calculation and Display
 
 The application will automatically calculate and display key earnings metrics to provide users with valuable insights into their income.
@@ -69,6 +79,12 @@ The application will automatically calculate and display key earnings metrics to
 
 *   **FR-020:** The system shall calculate the user's commission earned so far for the current month by taking 1% of their total turnover for the month.
 *   **FR-021:** This "estimated commission" will be clearly labeled to distinguish it from the final commission entered by the user.
+
+**4.3. Hourly Wage Calculation**
+
+*   **FR-040:** The system shall calculate the user's total hourly wages for the current month by summing all daily hourly wage entries (hours worked × hourly rate).
+*   **FR-041:** The total hourly wages shall be displayed in the dashboard's Monthly Summary section.
+*   **FR-042:** The hourly wages shall be included when calculating total monthly earnings alongside tips and commission.
 
 ### 5. Data Visualization
 

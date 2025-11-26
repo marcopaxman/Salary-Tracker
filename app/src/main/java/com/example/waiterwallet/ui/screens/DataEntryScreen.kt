@@ -61,6 +61,7 @@ fun DataEntryScreen(
     var turnover by remember { mutableStateOf("") }
     var tipsCash by remember { mutableStateOf("") }
     var tipsCard by remember { mutableStateOf("") }
+    var hoursWorked by remember { mutableStateOf("") }
     var notes by remember { mutableStateOf("") }
     
     val jobs by jobsVm.allJobs.collectAsState(initial = emptyList())
@@ -190,6 +191,21 @@ fun DataEntryScreen(
                 )
                 Spacer(Modifier.height(12.dp))
                 OutlinedTextField(
+                    value = hoursWorked,
+                    onValueChange = { hoursWorked = it },
+                    label = { Text("Hours Worked (optional)") },
+                    supportingText = { Text("For hourly wage calculation") },
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Decimal,
+                        imeAction = ImeAction.Next
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onNext = { focusManager.moveFocus(androidx.compose.ui.focus.FocusDirection.Down) }
+                    )
+                )
+                Spacer(Modifier.height(12.dp))
+                OutlinedTextField(
                     value = notes,
                     onValueChange = { notes = it },
                     label = { Text("Notes (optional)") },
@@ -208,13 +224,21 @@ fun DataEntryScreen(
         Spacer(Modifier.height(20.dp))
         Button(
             onClick = {
+                // Validate hoursWorked: if entered, must be > 0
+                val hours = hoursWorked.toDoubleOrNull()
+                if (hours != null && hours <= 0) {
+                    // Don't save if hours is 0 or negative
+                    return@Button
+                }
+                
                 vm.save(
                     date = selectedDate,
                     turnover = turnover.toDoubleOrNull() ?: 0.0,
                     tipsCash = tipsCash.toDoubleOrNull(),
                     tipsCard = tipsCard.toDoubleOrNull(),
                     notes = notes.ifBlank { null },
-                    jobId = selectedJobId
+                    jobId = selectedJobId,
+                    hoursWorked = hours
                 )
                 onSaved()
             },

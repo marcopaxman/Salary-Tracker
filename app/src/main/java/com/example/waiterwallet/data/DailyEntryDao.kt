@@ -35,6 +35,13 @@ interface DailyEntryDao {
     @Query("SELECT SUM(turnover) FROM daily_entries WHERE date BETWEEN :start AND :end AND jobId = :jobId")
     fun totalTurnoverForMonthByJob(start: LocalDate, end: LocalDate, jobId: Long): Flow<Double?>
 
+    // Hourly wage queries - returns sum of hours worked (multiply by hourlyRate in ViewModel)
+    @Query("SELECT SUM(COALESCE(hoursWorked, 0)) FROM daily_entries WHERE date BETWEEN :start AND :end")
+    fun totalHoursWorkedForMonth(start: LocalDate, end: LocalDate): Flow<Double?>
+
+    @Query("SELECT SUM(COALESCE(hoursWorked, 0)) FROM daily_entries WHERE date BETWEEN :start AND :end AND jobId = :jobId")
+    fun totalHoursWorkedForMonthByJob(start: LocalDate, end: LocalDate, jobId: Long): Flow<Double?>
+
     @Delete
     suspend fun delete(entry: DailyEntry)
 }

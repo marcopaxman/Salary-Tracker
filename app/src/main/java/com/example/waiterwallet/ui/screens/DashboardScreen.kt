@@ -81,8 +81,11 @@ fun DashboardScreen(
     val totalTipsNullable by vm.totalTipsForMonth(today, selectedJobId).collectAsState(initial = 0.0)
     val totalTips = totalTipsNullable ?: 0.0
     val totalTurnover by vm.totalTurnoverForMonth(today, selectedJobId).collectAsState(initial = 0.0)
+    val totalHoursWorked by vm.totalHoursWorkedForMonth(today, selectedJobId).collectAsState(initial = 0.0)
     val commissionPercent by vm.commissionPercent.collectAsState(initial = 0.01)
+    val hourlyRate by vm.hourlyRate.collectAsState(initial = 0.0)
     val estimatedCommission = vm.estimateCommission(totalTurnover, commissionPercent)
+    val totalHourlyWages = (totalHoursWorked ?: 0.0) * hourlyRate
     val goal by vm.goalForMonth(today).collectAsState(initial = null)
     val goalAmount = goal?.goalTips ?: 0.0
     val progress = if (goalAmount > 0) (totalTips / goalAmount).coerceIn(0.0, 1.0) else 0.0
@@ -242,6 +245,25 @@ fun DashboardScreen(
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
+                }
+                
+                // Hourly Wages (only show if hourly rate is set)
+                if (hourlyRate > 0) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            "Hourly Wages (${"%.0f".format(totalHoursWorked ?: 0.0)} hrs @ R${"%.2f".format(hourlyRate)}/hr)",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        Text(
+                            "R${"%.2f".format(totalHourlyWages)}",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
                 }
             }
         }

@@ -25,13 +25,15 @@ class SettingsViewModel(
     val commissionPercent: Flow<Double> = store.commissionPercent
     val reminderEnabled: Flow<Boolean> = store.reminderEnabled
     val reminderTime: Flow<LocalTime> = store.reminderTime
+    val hourlyRate: Flow<Double> = store.hourlyRate
 
     fun goalForMonth(date: LocalDate) = unifiedRepo.goalForMonth(MonthlyGoal.key(YearMonth.from(date)))
 
-    fun saveSettings(pct: Double, enabled: Boolean, time: LocalTime) {
+    fun saveSettings(pct: Double, enabled: Boolean, time: LocalTime, hourlyRate: Double) {
         viewModelScope.launch {
             store.setCommissionPercent(pct)
             store.setReminder(enabled, time)
+            store.setHourlyRate(hourlyRate)
             // Schedule/cancel reminder based on settings
             com.example.waiterwallet.utils.ReminderScheduler.scheduleReminder(
                 getApplication(),
