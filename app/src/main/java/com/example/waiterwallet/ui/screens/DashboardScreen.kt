@@ -1,7 +1,6 @@
 package com.example.waiterwallet.ui.screens
 
 import android.graphics.Color
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,12 +11,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
@@ -25,11 +21,8 @@ import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -38,24 +31,20 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.waiterwallet.ui.viewmodel.JobsViewModel
 import com.example.waiterwallet.ui.viewmodel.OverviewViewModel
-import com.example.waiterwallet.utils.CsvExporter
 import com.github.mikephil.charting.charts.BarChart
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.BarData
 import com.github.mikephil.charting.data.BarDataSet
 import com.github.mikephil.charting.data.BarEntry
 import com.github.mikephil.charting.formatter.ValueFormatter
-import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
@@ -63,13 +52,9 @@ import java.time.format.DateTimeFormatter
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
-    onAddEntry: () -> Unit,
-    onExportSuccess: (String) -> Unit = {},
     vm: OverviewViewModel = viewModel(factory = OverviewViewModel.Factory),
     jobsVm: JobsViewModel = viewModel(factory = JobsViewModel.Factory)
 ) {
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
     val today = LocalDate.now()
     val currentMonth = YearMonth.from(today)
     
@@ -93,10 +78,6 @@ fun DashboardScreen(
     // Get last 7 days of entries for chart
     val sevenDaysAgo = today.minusDays(6)
     val weekEntries by vm.entriesBetween(sevenDaysAgo, today, selectedJobId).collectAsState(initial = emptyList())
-    
-    // Get month entries for export
-    val (monthStart, monthEnd) = com.example.waiterwallet.data.DailyEntryRepository.monthRange(today)
-    val monthEntries by vm.entriesBetween(monthStart, monthEnd).collectAsState(initial = emptyList())
 
     Column(
         modifier = Modifier
@@ -327,39 +308,6 @@ fun DashboardScreen(
                 )
                 WeeklyTipsChart(entries = weekEntries, startDate = sevenDaysAgo, endDate = today)
             }
-        }
-        
-        Spacer(Modifier.height(20.dp))
-        
-        // Action Buttons
-        Button(
-            onClick = onAddEntry,
-            modifier = Modifier.fillMaxWidth().height(56.dp),
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.padding(end = 8.dp))
-            Text("Add Entry", style = MaterialTheme.typography.titleMedium)
-        }
-        
-        Spacer(Modifier.height(12.dp))
-        
-        FilledTonalButton(
-            onClick = {
-                scope.launch {
-                    val file = CsvExporter.exportToCSV(context, monthEntries, jobs, currentMonth.toString())
-                    if (file != null) {
-                        CsvExporter.shareCSV(context, file)
-                        onExportSuccess("Data exported successfully!")
-                    } else {
-                        Toast.makeText(context, "Export failed", Toast.LENGTH_SHORT).show()
-                    }
-                }
-            },
-            modifier = Modifier.fillMaxWidth().height(56.dp),
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.padding(end = 8.dp))
-            Text("Export Month to CSV", style = MaterialTheme.typography.titleMedium)
         }
         
         Spacer(Modifier.height(16.dp))

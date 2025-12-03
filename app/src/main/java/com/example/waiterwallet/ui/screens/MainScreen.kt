@@ -4,10 +4,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Build
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -39,9 +39,9 @@ data class BottomNavItem(
 
 val bottomNavItems = listOf(
     BottomNavItem(Routes.Dashboard, "Dashboard", Icons.Default.Home),
+    BottomNavItem(Routes.Entries, "Entries", Icons.Default.Edit),
     BottomNavItem(Routes.Calendar, "Calendar", Icons.Default.DateRange),
     BottomNavItem(Routes.Jobs, "Jobs", Icons.Default.Person),
-    BottomNavItem(Routes.FirebaseTest, "Test", Icons.Default.Build), // Remove in production
     BottomNavItem(Routes.Settings, "Settings", Icons.Default.Settings)
 )
 
@@ -66,7 +66,10 @@ fun MainScreen(
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(Routes.Dashboard) {
-                DashboardScreen(
+                DashboardScreen()
+            }
+            composable(Routes.Entries) {
+                EntriesScreen(
                     onAddEntry = { navController.navigate(Routes.Entry) },
                     onExportSuccess = { message ->
                         scope.launch {
@@ -97,9 +100,6 @@ fun MainScreen(
                     },
                     authViewModel = authViewModel
                 )
-            }
-            composable(Routes.FirebaseTest) {
-                FirebaseTestScreen()
             }
             composable(Routes.Entry) {
                 DataEntryScreen(onSaved = {
