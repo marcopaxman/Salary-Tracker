@@ -10,10 +10,10 @@ import com.example.waiterwallet.ui.viewmodel.AuthViewModel
 object Routes {
     const val Dashboard = "dashboard"
     const val Entry = "entry"
+    const val Entries = "entries"
     const val Settings = "settings"
     const val Calendar = "calendar"
     const val Jobs = "jobs"
-    const val FirebaseTest = "firebase_test" // Test screen for Firebase operations
 }
 
 @Composable
