@@ -157,6 +157,50 @@ export default function Settings() {
                 </div>
             </div>
         </div>
+
+        {/* Work Configuration Section */}
+        <div className="space-y-4">
+            <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider ml-1">Work Configuration</h3>
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden divide-y divide-slate-100">
+                
+                {/* Hourly Wage */}
+                <div className="p-4 flex items-center justify-between">
+                    <div>
+                        <p className="font-semibold text-slate-900">Hourly Wage</p>
+                        <p className="text-sm text-slate-500">Your default hourly rate</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="text-slate-500 font-medium">{selectedCurrency.symbol}</span>
+                        <input 
+                            type="number"
+                            className="w-24 px-3 py-2 border border-slate-200 rounded-lg text-right focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
+                            value={settings.hourlyRate || ''}
+                            onChange={(e) => updateSettings({ hourlyRate: parseFloat(e.target.value) || 0 })}
+                            placeholder="0.00"
+                        />
+                    </div>
+                </div>
+
+                {/* Commission Percentage */}
+                <div className="p-4 flex items-center justify-between">
+                    <div>
+                        <p className="font-semibold text-slate-900">Commission</p>
+                        <p className="text-sm text-slate-500">Default commission percentage</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <input 
+                            type="number"
+                            className="w-24 px-3 py-2 border border-slate-200 rounded-lg text-right focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
+                            value={(settings.commissionPercent * 100) || ''}
+                            onChange={(e) => updateSettings({ commissionPercent: (parseFloat(e.target.value) || 0) / 100 })}
+                            placeholder="1"
+                        />
+                        <span className="text-slate-500 font-medium">%</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
         
         <div className="pt-4">
              <button 

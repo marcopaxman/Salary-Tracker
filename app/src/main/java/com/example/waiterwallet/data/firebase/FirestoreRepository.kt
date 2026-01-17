@@ -77,7 +77,7 @@ class FirestoreRepository(
             
             val updatedEntry = entry.copy(updatedAt = System.currentTimeMillis())
             entriesCollection()
-                .document(entry.id)
+                .document(entry.docId)
                 .set(updatedEntry)
                 .await()
             
@@ -187,15 +187,15 @@ class FirestoreRepository(
             
             val updatedJob = job.copy(updatedAt = System.currentTimeMillis())
             
-            val docRef = if (job.id.isEmpty()) {
+            val docRef = if (job.docId.isEmpty()) {
                 // Create new job with auto-generated ID
                 jobsCollection().document()
             } else {
                 // Update existing job
-                jobsCollection().document(job.id)
+                jobsCollection().document(job.docId)
             }
             
-            docRef.set(updatedJob.copy(id = docRef.id)).await()
+            docRef.set(updatedJob.copy(docId = docRef.id)).await()
             
             Log.d(TAG, "Successfully upserted job: ${job.name}")
             Result.success(docRef.id)
@@ -287,7 +287,7 @@ class FirestoreRepository(
             
             val updatedGoal = goal.copy(updatedAt = System.currentTimeMillis())
             goalsCollection()
-                .document(goal.yearMonth)
+                .document(goal.docId)
                 .set(updatedGoal)
                 .await()
             
@@ -414,7 +414,7 @@ class FirestoreRepository(
                 val batch = firestore.batch()
                 
                 chunk.forEach { entry ->
-                    val docRef = entriesCollection().document(entry.id)
+                    val docRef = entriesCollection().document(entry.docId)
                     val updatedEntry = entry.copy(updatedAt = System.currentTimeMillis())
                     batch.set(docRef, updatedEntry)
                 }

@@ -6,6 +6,8 @@ import { useAuth } from '../contexts/AuthContext';
 export interface UserSettings {
     currency: string;
     notificationsEnabled: boolean;
+    hourlyRate: number;
+    commissionPercent: number;
 }
 
 export const CURRENCIES = [
@@ -22,7 +24,9 @@ export const formatCurrency = (amount: number, currencyCode: string) => {
 
 const DEFAULT_SETTINGS: UserSettings = {
     currency: 'EUR',
-    notificationsEnabled: false
+    notificationsEnabled: false,
+    hourlyRate: 0,
+    commissionPercent: 0.01
 };
 
 export function useSettings() {

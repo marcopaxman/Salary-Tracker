@@ -2,12 +2,15 @@ package com.example.waiterwallet.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
 import com.example.waiterwallet.data.DailyEntryRepository
 import com.example.waiterwallet.data.MonthlyGoal
 import com.example.waiterwallet.data.MonthlyGoalDao
 import com.example.waiterwallet.data.SettingsStore
 import com.example.waiterwallet.data.UnifiedRepository
 import com.example.waiterwallet.data.UnifiedRepositoryFactory
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.YearMonth
 
@@ -34,6 +37,21 @@ class OverviewViewModel(
     fun entriesBetween(start: LocalDate, end: LocalDate, jobId: Long? = null) = 
         if (jobId == null) unifiedRepo.entriesBetween(start, end)
         else unifiedRepo.entriesBetweenForJob(start, end, jobId)
+    
+    /**
+     * Get monthly earnings history for charting
+     */
+    fun getMonthlyEarningsHistory(numberOfMonths: Int = 12) = flow {
+        val hourlyRateValue = hourlyRate.first()
+        val commissionPercentValue = commissionPercent.first()
+        
+        val result = unifiedRepo.getMonthlyEarningsHistory(
+            numberOfMonths = numberOfMonths,
+            hourlyRate = hourlyRateValue ?: 0.0,
+            commissionPercent = commissionPercentValue ?: 0.01
+        )
+        emit(result)
+    }
     
     val commissionPercent = settings.commissionPercent
     val hourlyRate = settings.hourlyRate
