@@ -2,12 +2,11 @@ import { useEntries } from '../hooks/useEntries';
 import { useSettings, formatCurrency } from '../hooks/useSettings';
 import { format, parseISO } from 'date-fns';
 import { Edit2, Plus, Calendar } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 export default function EntryList() {
   const { entries, loading } = useEntries();
   const { settings } = useSettings();
-  const navigate = useNavigate();
 
   if (loading) {
     return (
@@ -25,13 +24,13 @@ export default function EntryList() {
             <h2 className="text-3xl font-bold tracking-tight text-slate-900">Entries</h2>
             <p className="text-slate-500 mt-1">Manage your daily salary records</p>
         </div>
-        <button 
-          onClick={() => navigate('/entries/new')}
+        <Link 
+          to="/dashboard/entry/new"
           className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-semibold shadow-lg shadow-blue-600/20 transition-all active:scale-95"
         >
           <Plus size={20} />
           <span>Add Entry</span>
-        </button>
+        </Link>
       </div>
       
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
@@ -79,12 +78,12 @@ export default function EntryList() {
                       {entry.hoursWorked || '-'}
                     </td>
                     <td className="px-6 py-4 text-right">
-                       <button 
-                            onClick={() => navigate(`/entries/${entry.id}`)}
-                            className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                       <Link 
+                            to={`/dashboard/entry/${entry.id}`}
+                            className="inline-block p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
                        >
                             <Edit2 size={18} />
-                       </button>
+                       </Link>
                     </td>
                   </tr>
                 ))}

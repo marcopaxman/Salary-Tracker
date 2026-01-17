@@ -4,6 +4,7 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { useJobs } from '../hooks/useJobs';
+import { useSettings, CURRENCIES } from '../hooks/useSettings';
 import type { FirestoreDailyEntry } from '../types';
 import { ArrowLeft, Save, Calendar, DollarSign, Clock, FileText, Briefcase } from 'lucide-react';
 import { format } from 'date-fns';
@@ -13,6 +14,7 @@ export default function EntryForm() {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
   const { jobs } = useJobs();
+  const { settings } = useSettings();
   
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(!!id);
@@ -95,7 +97,7 @@ export default function EntryForm() {
         Object.keys(entryData).forEach(key => entryData[key] === undefined && delete entryData[key]);
 
         await setDoc(doc(db, 'users', currentUser.uid, 'entries', entryId), entryData, { merge: true });
-        navigate('/entries');
+        navigate('/dashboard/entries');
     } catch (err) {
         console.error(err);
         setError('Failed to save entry');
@@ -121,11 +123,14 @@ export default function EntryForm() {
       }
   };
 
+  // Get currency symbol from settings
+  const currencySymbol = CURRENCIES.find(c => c.code === settings.currency)?.symbol || '€';
+
   return (
     <div className="max-w-2xl mx-auto space-y-6 pb-24 md:pb-0">
       <div className="flex items-center gap-4">
         <button 
-           onClick={() => navigate('/entries')}
+           onClick={() => navigate('/dashboard/entries')}
            className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-500 hover:text-slate-900"
         >
             <ArrowLeft size={24} />
@@ -193,7 +198,7 @@ export default function EntryForm() {
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                  <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-1.5">Total Turnover (€)</label>
+                    <label className="block text-sm font-medium text-slate-600 mb-1.5">Total Turnover ({currencySymbol})</label>
                     <input 
                         type="number"
                         step="0.01"
@@ -205,7 +210,7 @@ export default function EntryForm() {
                     />
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-1.5">Cash Tips (€)</label>
+                    <label className="block text-sm font-medium text-slate-600 mb-1.5">Cash Tips ({currencySymbol})</label>
                     <input 
                         type="number"
                         step="0.01"
@@ -217,7 +222,7 @@ export default function EntryForm() {
                     />
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-1.5">Card Tips (€)</label>
+                    <label className="block text-sm font-medium text-slate-600 mb-1.5">Card Tips ({currencySymbol})</label>
                     <input 
                         type="number"
                         step="0.01"
@@ -269,7 +274,7 @@ export default function EntryForm() {
         <div className="pt-4 flex items-center justify-end gap-4">
             <button
                 type="button"
-                onClick={() => navigate('/entries')}
+                onClick={() => navigate('/dashboard/entries')}
                 className="px-6 py-2.5 text-slate-600 font-medium hover:bg-slate-100 rounded-xl transition-colors"
             >
                 Cancel

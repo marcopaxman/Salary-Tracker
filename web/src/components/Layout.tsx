@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, List, Briefcase, Settings, LogOut, Wallet } from 'lucide-react';
+import { LayoutDashboard, List, Briefcase, Settings, LogOut, Wallet, Calendar as CalendarIcon } from 'lucide-react';
 import { auth } from '../lib/firebase';
 
 export default function Layout() {
@@ -7,10 +7,11 @@ export default function Layout() {
   const navigate = useNavigate();
 
   const navigation = [
-    { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-    { name: 'Entries', href: '/entries', icon: List },
-    { name: 'Jobs', href: '/jobs', icon: Briefcase },
-    { name: 'Settings', href: '/settings', icon: Settings },
+    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { name: 'Entries', href: '/dashboard/entries', icon: List },
+    { name: 'Calendar', href: '/dashboard/calendar', icon: CalendarIcon },
+    { name: 'Jobs', href: '/dashboard/jobs', icon: Briefcase },
+    { name: 'Settings', href: '/dashboard/settings', icon: Settings },
   ];
 
   async function handleLogout() {

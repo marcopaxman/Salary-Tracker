@@ -11,6 +11,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.YearMonth
@@ -214,6 +215,49 @@ class UnifiedRepository(
     fun totalHoursWorkedForMonth(date: LocalDate): Flow<Double?> {
         return roomEntryRepo.totalHoursWorkedForMonth(date)
     }
+    
+    /**
+     * Get monthly earnings history for the last N months.
+     * Returns a list of MonthlyEarnings sorted by month (oldest first).
+     * 
+     * @param numberOfMonths Number of months to retrieve (default 12)
+     * @param hourlyRate Hourly rate for calculating hourly wages
+     * @param commissionPercent Commission percentage (e.g., 0.01 for 1%)
+     */
+    suspend fun getMonthlyEarningsHistory(
+        numberOfMonths: Int = 12,
+        hourlyRate: Double,
+        commissionPercent: Double
+    ): List<MonthlyEarnings> {
+        val currentMonth = YearMonth.now()
+        val monthsList = mutableListOf<MonthlyEarnings>()
+        
+        // Generate list of months from oldest to newest
+        for (i in (numberOfMonths - 1) downTo 0) {
+            val targetMonth = currentMonth.minusMonths(i.toLong())
+            val start = targetMonth.atDay(1)
+            
+            // Get data for this month (using first() to get single value from Flow)
+            val tips = roomEntryRepo.totalTipsForMonth(start).first() ?: 0.0
+            val turnover = roomEntryRepo.totalTurnoverForMonth(start).first() ?: 0.0
+            val hoursWorked = roomEntryRepo.totalHoursWorkedForMonth(start).first() ?: 0.0
+            
+            val commission = turnover * commissionPercent
+            val wages = hoursWorked * hourlyRate
+            
+            monthsList.add(
+                MonthlyEarnings(
+                    yearMonth = targetMonth,
+                    tips = tips,
+                    commission = commission,
+                    hourlyWages = wages
+                )
+            )
+        }
+        
+        return monthsList
+    }
+
     
     /**
      * Get total hours worked for a month by job

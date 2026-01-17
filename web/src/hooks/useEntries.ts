@@ -22,7 +22,10 @@ export function useEntries() {
 
         const unsubscribe = onSnapshot(q,
             (snapshot) => {
-                const data = snapshot.docs.map(doc => doc.data() as FirestoreDailyEntry);
+                const data = snapshot.docs.map(doc => ({
+                    ...doc.data(),
+                    id: doc.id
+                } as FirestoreDailyEntry));
                 setEntries(data);
                 setLoading(false);
             },
