@@ -3,7 +3,7 @@ import { useEntries } from '../hooks/useEntries';
 import { useGoals } from '../hooks/useGoals';
 import { useSettings, formatCurrency, CURRENCIES } from '../hooks/useSettings';
 import { startOfMonth, endOfMonth, isWithinInterval, parseISO, format, subMonths } from 'date-fns';
-import { Euro, TrendingUp, ChevronRight, Calculator, Clock, Wallet } from 'lucide-react';
+import { TrendingUp, ChevronRight, Calculator, Clock, Wallet, CreditCard, Banknote } from 'lucide-react';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 export default function Dashboard() {
@@ -13,8 +13,9 @@ export default function Dashboard() {
   
   const [isEditingGoal, setIsEditingGoal] = useState(false);
   const [newGoalAmount, setNewGoalAmount] = useState('');
+  const [selectedMonth, setSelectedMonth] = useState(format(new Date(), 'yyyy-MM'));
 
-  const currentMonthDate = new Date();
+  const currentMonthDate = parseISO(`${selectedMonth}-01`);
   const currentGoal = getGoalForMonth(currentMonthDate);
 
   const stats = useMemo(() => {
@@ -28,15 +29,17 @@ export default function Dashboard() {
     return monthlyEntries.reduce((acc, entry) => ({
       turnover: acc.turnover + entry.turnover,
       tips: acc.tips + (entry.tipsCash || 0) + (entry.tipsCard || 0),
+      tipsCash: acc.tipsCash + (entry.tipsCash || 0),
+      tipsCard: acc.tipsCard + (entry.tipsCard || 0),
       hours: acc.hours + (entry.hoursWorked || 0)
-    }), { turnover: 0, tips: 0, hours: 0 });
-  }, [entries]);
+    }), { turnover: 0, tips: 0, tipsCash: 0, tipsCard: 0, hours: 0 });
+  }, [entries, currentMonthDate]);
 
   // Chart Data Preparation - Last 7 days
   const weeklyData = useMemo(() => {
      const days = [];
      for (let i = 6; i >= 0; i--) {
-         const d = new Date();
+         const d = new Date(currentMonthDate);
          d.setDate(d.getDate() - i);
          days.push(format(d, 'yyyy-MM-dd'));
      }
@@ -49,7 +52,7 @@ export default function Dashboard() {
              tips: totalTips
          };
      });
-  }, [entries]);
+  }, [entries, currentMonthDate]);
 
   // Monthly Earnings Data - Last 6 months
   const monthlyEarningsData = useMemo(() => {
@@ -79,7 +82,7 @@ export default function Dashboard() {
       });
     }
     return months;
-  }, [entries, settings.commissionPercent, settings.hourlyRate]);
+  }, [entries, currentMonthDate, settings.commissionPercent, settings.hourlyRate]);
 
   const handleSaveGoal = async () => {
       if (!newGoalAmount) return;
@@ -108,10 +111,18 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8 pb-24 md:pb-0">
-      <div className="flex justify-between items-end">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
         <div>
            <h2 className="text-3xl font-bold tracking-tight text-slate-900">Dashboard</h2>
            <p className="text-slate-500 mt-1">Overview for {format(currentMonthDate, 'MMMM yyyy')}</p>
+        </div>
+        <div className="flex items-center">
+          <input
+            type="month"
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(e.target.value)}
+            className="px-4 py-2 border border-slate-200 rounded-lg shadow-sm text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
         </div>
       </div>
 
@@ -134,8 +145,8 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Turnover Card */}
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between hover:shadow-md transition-shadow relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-               <Euro size={80} className="text-blue-600" />
+            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity flex items-center justify-center">
+               <span className="text-[80px] leading-none text-blue-600 font-light select-none">{currencySymbol}</span>
             </div>
             <div>
               <h3 className="text-slate-500 font-medium text-sm uppercase tracking-wider">Total Turnover</h3>
@@ -179,6 +190,40 @@ export default function Dashboard() {
             </div>
             <div className="mt-4 text-sm text-slate-500">
               From turnover
+            </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Cash Tips Card */}
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between hover:shadow-md transition-shadow relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+               <Banknote size={80} className="text-green-600" />
+            </div>
+            <div>
+              <h3 className="text-slate-500 font-medium text-sm uppercase tracking-wider">Cash Tips</h3>
+              <p className="text-4xl font-bold text-slate-900 mt-4 tracking-tight">
+                {formatCurrency(stats.tipsCash, settings.currency)}
+              </p>
+            </div>
+            <div className="mt-4 text-sm text-slate-500">
+              Total cash tips received
+            </div>
+        </div>
+
+        {/* Card Tips Card */}
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between hover:shadow-md transition-shadow relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+               <CreditCard size={80} className="text-blue-500" />
+            </div>
+            <div>
+              <h3 className="text-slate-500 font-medium text-sm uppercase tracking-wider">Card Tips</h3>
+              <p className="text-4xl font-bold text-slate-900 mt-4 tracking-tight">
+                {formatCurrency(stats.tipsCard, settings.currency)}
+              </p>
+            </div>
+            <div className="mt-4 text-sm text-slate-500">
+              Total card tips received
             </div>
         </div>
       </div>

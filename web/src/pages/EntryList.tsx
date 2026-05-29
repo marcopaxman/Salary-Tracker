@@ -80,7 +80,7 @@ export default function EntryList() {
                     <td className="px-6 py-4 text-right">
                        <Link 
                             to={`/dashboard/entry/${entry.id}`}
-                            className="inline-block p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                            className="inline-block p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all md:opacity-0 md:group-hover:opacity-100"
                        >
                             <Edit2 size={18} />
                        </Link>
