@@ -39,6 +39,9 @@ export default function Calendar() {
 
   const totalTips = selectedStats.tipsCash + selectedStats.tipsCard;
   const hourlyWage = selectedStats.hours * (settings.hourlyRate || 0);
+  const notesForDay = selectedEntries
+    .map(e => e.notes?.trim())
+    .filter((note): note is string => Boolean(note));
 
   return (
     <div className="space-y-6 pb-24 md:pb-0">
@@ -170,6 +173,15 @@ export default function Calendar() {
                     <span className="font-semibold text-purple-600">{formatCurrency(hourlyWage, settings.currency)}</span>
                   </div>
                 </div>
+
+                {notesForDay.length > 0 && (
+                  <div className="bg-amber-50 rounded-xl p-4 space-y-2">
+                    <span className="text-sm font-semibold text-slate-700">Notes:</span>
+                    {notesForDay.map((note, index) => (
+                      <p key={index} className="text-sm text-slate-600 whitespace-pre-wrap">{note}</p>
+                    ))}
+                  </div>
+                )}
 
                 <button
                   onClick={() => setSelectedDate(null)}

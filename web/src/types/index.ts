@@ -7,6 +7,7 @@ export interface FirestoreDailyEntry {
     notes?: string;
     jobId?: string; // Stringified Long
     hoursWorked?: number;
+    active?: boolean;
     createdAt: number;
     updatedAt: number;
 }

@@ -4,9 +4,10 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { useJobs } from '../hooks/useJobs';
+import { useEntries, isEntryActive } from '../hooks/useEntries';
 import { useSettings, CURRENCIES } from '../hooks/useSettings';
 import type { FirestoreDailyEntry } from '../types';
-import { ArrowLeft, Save, Calendar, DollarSign, Clock, FileText, Briefcase } from 'lucide-react';
+import { ArrowLeft, Save, Calendar, DollarSign, Clock, FileText, Briefcase, Archive, RotateCcw } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function EntryForm() {
@@ -15,10 +16,12 @@ export default function EntryForm() {
   const { currentUser } = useAuth();
   const { jobs } = useJobs();
   const { settings } = useSettings();
+  const { deactivateEntry, reactivateEntry, deleteEntry } = useEntries();
   
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(!!id);
   const [error, setError] = useState('');
+  const [isArchived, setIsArchived] = useState(false);
 
   // Form State
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -47,6 +50,7 @@ export default function EntryForm() {
             setSelectedJob(data.jobId || '');
             setNotes(data.notes || '');
             setCreatedAt(data.createdAt);
+            setIsArchived(!isEntryActive(data));
           } else {
              setError('Entry not found');
           }
@@ -73,34 +77,83 @@ export default function EntryForm() {
     e.preventDefault();
     if (!currentUser) return;
 
-    // Use URL id if editing, otherwise use selected date as ID
-    const entryId = id || date; 
+    const entryId = date;
 
     setLoading(true);
     setError('');
 
     try {
-        const entryData: any = { // Use any to construct then cast if needed, or better, just ensure no undefined
+        if (id && date !== id) {
+            const newDocRef = doc(db, 'users', currentUser.uid, 'entries', date);
+            const existingSnap = await getDoc(newDocRef);
+            if (existingSnap.exists() && isEntryActive(existingSnap.data() as FirestoreDailyEntry)) {
+                setError('An entry already exists for this date.');
+                setLoading(false);
+                return;
+            }
+        } else if (!id) {
+            const docRef = doc(db, 'users', currentUser.uid, 'entries', date);
+            const existingSnap = await getDoc(docRef);
+            if (existingSnap.exists() && isEntryActive(existingSnap.data() as FirestoreDailyEntry)) {
+                setError('An entry already exists for this date.');
+                setLoading(false);
+                return;
+            }
+        }
+
+        const entryData: Record<string, unknown> = {
             id: entryId,
             date: date,
             turnover: parseFloat(turnover) || 0,
             tipsCash: parseFloat(tipsCash) || 0,
             tipsCard: parseFloat(tipsCard) || 0,
             hoursWorked: parseFloat(hours) || 0,
-            jobId: selectedJob || null, // Ensure null if empty, not undefined
+            jobId: selectedJob || null,
             notes: notes || '',
+            active: true,
             createdAt: id ? createdAt : Date.now(),
             updatedAt: Date.now()
         };
 
-        // Remove undefined fields just in case (though we handled most)
         Object.keys(entryData).forEach(key => entryData[key] === undefined && delete entryData[key]);
 
         await setDoc(doc(db, 'users', currentUser.uid, 'entries', entryId), entryData, { merge: true });
+
+        if (id && date !== id) {
+            await deleteEntry(id);
+        }
+
         navigate('/dashboard/entries');
     } catch (err) {
         console.error(err);
         setError('Failed to save entry');
+    } finally {
+        setLoading(false);
+    }
+  }
+
+  async function handleDeactivate() {
+    if (!id || !window.confirm('Deactivate this entry? It will be archived and excluded from dashboard calculations.')) return;
+    setLoading(true);
+    try {
+        await deactivateEntry(id);
+        navigate('/dashboard/entries');
+    } catch (err) {
+        console.error(err);
+        setError('Failed to deactivate entry');
+        setLoading(false);
+    }
+  }
+
+  async function handleReactivate() {
+    if (!id) return;
+    setLoading(true);
+    try {
+        await reactivateEntry(id);
+        setIsArchived(false);
+    } catch (err) {
+        console.error(err);
+        setError('Failed to reactivate entry');
     } finally {
         setLoading(false);
     }
@@ -140,13 +193,28 @@ export default function EntryForm() {
                 {id ? 'Edit Entry' : 'New Entry'}
             </h1>
             <p className="text-slate-500 text-sm">
-                {id ? `Editing details for ${getDisplayDate(id)}` : 'Record your earnings for a shift'}
+                {id ? `Editing details for ${getDisplayDate(date)}` : 'Record your earnings for a shift'}
             </p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 space-y-8 animate-in slide-in-from-bottom-4 duration-500">
         
+        {isArchived && id && (
+            <div className="bg-amber-50 text-amber-800 p-4 rounded-xl text-sm font-medium border border-amber-100 flex items-center justify-between gap-4">
+                <span>This entry is archived and not included in dashboard calculations.</span>
+                <button
+                    type="button"
+                    onClick={handleReactivate}
+                    disabled={loading}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-100 hover:bg-amber-200 text-amber-900 rounded-lg text-xs font-semibold transition-colors shrink-0 disabled:opacity-50"
+                >
+                    <RotateCcw size={14} />
+                    Reactivate
+                </button>
+            </div>
+        )}
+
         {error && (
             <div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm font-medium border border-red-100">
                 {error}
@@ -164,8 +232,7 @@ export default function EntryForm() {
                     <input 
                         type="date"
                         required
-                        disabled={!!id} // Disable date editing if editing existing entry (since it's the ID)
-                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed font-medium text-slate-900"
+                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium text-slate-900"
                         value={date}
                         onChange={(e) => setDate(e.target.value)}
                     />
@@ -271,22 +338,37 @@ export default function EntryForm() {
             </div>
         </div>
 
-        <div className="pt-4 flex items-center justify-end gap-4">
-            <button
-                type="button"
-                onClick={() => navigate('/dashboard/entries')}
-                className="px-6 py-2.5 text-slate-600 font-medium hover:bg-slate-100 rounded-xl transition-colors"
-            >
-                Cancel
-            </button>
-            <button
-                type="submit"
-                disabled={loading}
-                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-2.5 rounded-xl font-bold shadow-lg shadow-blue-600/20 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-                <Save size={20} />
-                <span>{loading ? 'Saving...' : 'Save Entry'}</span>
-            </button>
+        <div className="pt-4 flex items-center justify-between gap-4">
+            {id && !isArchived ? (
+                <button
+                    type="button"
+                    onClick={handleDeactivate}
+                    disabled={loading}
+                    className="flex items-center gap-2 px-4 py-2.5 text-red-600 font-medium hover:bg-red-50 border border-red-200 rounded-xl transition-colors disabled:opacity-50"
+                >
+                    <Archive size={18} />
+                    <span>Deactivate</span>
+                </button>
+            ) : (
+                <div />
+            )}
+            <div className="flex items-center gap-4">
+                <button
+                    type="button"
+                    onClick={() => navigate('/dashboard/entries')}
+                    className="px-6 py-2.5 text-slate-600 font-medium hover:bg-slate-100 rounded-xl transition-colors"
+                >
+                    Cancel
+                </button>
+                <button
+                    type="submit"
+                    disabled={loading}
+                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-2.5 rounded-xl font-bold shadow-lg shadow-blue-600/20 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    <Save size={20} />
+                    <span>{loading ? 'Saving...' : 'Save Entry'}</span>
+                </button>
+            </div>
         </div>
 
       </form>

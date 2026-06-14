@@ -1,12 +1,70 @@
 import { useEntries } from '../hooks/useEntries';
 import { useSettings, formatCurrency } from '../hooks/useSettings';
 import { format, parseISO } from 'date-fns';
-import { Edit2, Plus, Calendar } from 'lucide-react';
+import { Edit2, Plus, Calendar, Archive, RotateCcw } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import type { FirestoreDailyEntry } from '../types';
+
+function EntryTableRow({
+  entry,
+  settings,
+  actions,
+  muted = false,
+}: {
+  entry: FirestoreDailyEntry;
+  settings: { currency: string };
+  actions: React.ReactNode;
+  muted?: boolean;
+}) {
+  return (
+    <tr className={`hover:bg-slate-50 transition-colors group ${muted ? 'opacity-60' : ''}`}>
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+        {format(parseISO(entry.date), 'MMM d, yyyy')}
+      </td>
+      <td className="px-6 py-4 text-slate-600 font-medium">
+        {formatCurrency(entry.turnover, settings.currency)}
+      </td>
+      <td className="px-6 py-4">
+        <div className="flex items-center gap-2 text-sm">
+          <span className="px-2 py-1 bg-green-50 text-green-700 rounded-md font-medium text-xs">
+            {formatCurrency(entry.tipsCash || 0, settings.currency)} cash
+          </span>
+          <span className="text-slate-300">|</span>
+          <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded-md font-medium text-xs">
+            {formatCurrency(entry.tipsCard || 0, settings.currency)} card
+          </span>
+        </div>
+      </td>
+      <td className="px-6 py-4 text-slate-600 font-medium">
+        {entry.hoursWorked || '-'}
+      </td>
+      <td className="px-6 py-4 text-right">
+        <div className="flex items-center justify-end gap-1">
+          {actions}
+          <Link
+            to={`/dashboard/entry/${entry.id}`}
+            className="inline-block p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all md:opacity-0 md:group-hover:opacity-100"
+          >
+            <Edit2 size={18} />
+          </Link>
+        </div>
+      </td>
+    </tr>
+  );
+}
 
 export default function EntryList() {
-  const { entries, loading } = useEntries();
+  const { entries, inactiveEntries, loading, deactivateEntry, reactivateEntry } = useEntries();
   const { settings } = useSettings();
+
+  async function handleDeactivate(entryId: string) {
+    if (!window.confirm('Deactivate this entry? It will be archived and excluded from dashboard calculations.')) return;
+    await deactivateEntry(entryId);
+  }
+
+  async function handleReactivate(entryId: string) {
+    await reactivateEntry(entryId);
+  }
 
   if (loading) {
     return (
@@ -56,42 +114,69 @@ export default function EntryList() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {entries.map((entry) => (
-                  <tr key={entry.id} className="hover:bg-slate-50 transition-colors group">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                      {format(parseISO(entry.date), 'MMM d, yyyy')}
-                    </td>
-                    <td className="px-6 py-4 text-slate-600 font-medium">
-                      {formatCurrency(entry.turnover, settings.currency)}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2 text-sm">
-                          <span className="px-2 py-1 bg-green-50 text-green-700 rounded-md font-medium text-xs">
-                             {formatCurrency(entry.tipsCash || 0, settings.currency)} cash
-                          </span>
-                          <span className="text-slate-300">|</span>
-                          <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded-md font-medium text-xs">
-                             {formatCurrency(entry.tipsCard || 0, settings.currency)} card
-                          </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-slate-600 font-medium">
-                      {entry.hoursWorked || '-'}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                       <Link 
-                            to={`/dashboard/entry/${entry.id}`}
-                            className="inline-block p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all md:opacity-0 md:group-hover:opacity-100"
-                       >
-                            <Edit2 size={18} />
-                       </Link>
-                    </td>
-                  </tr>
+                  <EntryTableRow
+                    key={entry.id}
+                    entry={entry}
+                    settings={settings}
+                    actions={
+                      <button
+                        onClick={() => handleDeactivate(entry.id)}
+                        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all md:opacity-0 md:group-hover:opacity-100"
+                        title="Deactivate entry"
+                      >
+                        <Archive size={18} />
+                      </button>
+                    }
+                  />
                 ))}
               </tbody>
             </table>
           </div>
         )}
       </div>
+
+      {inactiveEntries.length > 0 && (
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-xl font-bold text-slate-700">Archived Entries</h3>
+            <p className="text-slate-500 text-sm mt-1">Inactive entries excluded from dashboard calculations</p>
+          </div>
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden opacity-90">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50/50 border-b border-slate-200">
+                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Date</th>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Turnover</th>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Tips (Cash / Card)</th>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Hours</th>
+                    <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {inactiveEntries.map((entry) => (
+                    <EntryTableRow
+                      key={entry.id}
+                      entry={entry}
+                      settings={settings}
+                      muted
+                      actions={
+                        <button
+                          onClick={() => handleReactivate(entry.id)}
+                          className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all md:opacity-0 md:group-hover:opacity-100"
+                          title="Reactivate entry"
+                        >
+                          <RotateCcw size={18} />
+                        </button>
+                      }
+                    />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
