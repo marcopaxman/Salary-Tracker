@@ -1,10 +1,12 @@
+import { useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, List, Briefcase, Settings, LogOut, Wallet, Calendar as CalendarIcon } from 'lucide-react';
+import { LayoutDashboard, List, Briefcase, Settings, LogOut, Wallet, Calendar as CalendarIcon, ChevronDown, Menu } from 'lucide-react';
 import { auth } from '../lib/firebase';
 
 export default function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
+  const [navOpen, setNavOpen] = useState(true);
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -25,7 +27,7 @@ export default function Layout() {
 
   return (
     <div className="flex h-screen bg-gray-50 font-sans">
-      {/* Sidebar - Sleek Dark Design */}
+      {/* Sidebar - Desktop */}
       <div className="hidden md:flex flex-col w-72 bg-slate-900 border-r border-slate-800 text-slate-300">
         <div className="p-8 pb-4">
           <div className="flex items-center gap-3 text-white mb-2">
@@ -71,7 +73,6 @@ export default function Layout() {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-gray-50">
-        {/* Mobile Header */}
         <header className="md:hidden bg-white border-b border-gray-200 p-4 flex justify-between items-center sticky top-0 z-20 shadow-sm">
            <div className="flex items-center gap-2">
              <div className="p-1.5 bg-blue-600 rounded">
@@ -84,31 +85,50 @@ export default function Layout() {
            </button>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-4 md:p-8 scroll-smooth">
+        <main className={`flex-1 overflow-y-auto p-4 md:p-8 scroll-smooth transition-[padding] duration-300 ${navOpen ? 'pb-32' : 'pb-8'} md:pb-8`}>
           <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500">
             <Outlet />
           </div>
         </main>
       </div>
       
-      {/* Mobile Bottom Nav - Glassmorphism effect */}
-      <div className="md:hidden fixed bottom-6 left-4 right-4 bg-slate-900/90 backdrop-blur-lg border border-slate-800 shadow-2xl rounded-2xl flex justify-around p-2 z-30">
-        {navigation.map((item) => {
-            const Icon = item.icon;
-            const isActive = location.pathname === item.href;
-            return (
-              <Link
-                key={item.name}
-                to={item.href}
-                className={`flex flex-col items-center justify-center p-3 rounded-xl transition-all ${
-                  isActive ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                <Icon size={20} />
-              </Link>
-            );
-          })}
-      </div>
+      {/* Mobile Bottom Nav - Collapsible */}
+      {navOpen ? (
+        <div className="md:hidden fixed bottom-4 left-4 right-4 z-30">
+          <button
+            onClick={() => setNavOpen(false)}
+            className="absolute -top-3 left-1/2 -translate-x-1/2 bg-slate-700 text-slate-300 hover:text-white p-1 rounded-full shadow-lg border border-slate-600 z-40"
+            aria-label="Hide navigation"
+          >
+            <ChevronDown size={16} />
+          </button>
+          <div className="bg-slate-900/90 backdrop-blur-lg border border-slate-800 shadow-2xl rounded-2xl flex justify-around p-2">
+            {navigation.map((item) => {
+              const Icon = item.icon;
+              const isActive = location.pathname === item.href;
+              return (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  className={`flex flex-col items-center justify-center p-3 rounded-xl transition-all ${
+                    isActive ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <Icon size={20} />
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
+        <button
+          onClick={() => setNavOpen(true)}
+          className="md:hidden fixed bottom-4 right-4 z-30 bg-slate-900 text-white p-4 rounded-full shadow-2xl border border-slate-700 hover:bg-slate-800 transition-colors"
+          aria-label="Show navigation"
+        >
+          <Menu size={22} />
+        </button>
+      )}
     </div>
   );
 }

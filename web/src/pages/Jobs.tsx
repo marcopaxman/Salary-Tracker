@@ -59,7 +59,7 @@ export default function Jobs() {
   }
 
   return (
-    <div className="space-y-8 pb-24 md:pb-0">
+    <div className="space-y-8">
       <div className="flex justify-between items-center">
         <div>
            <h2 className="text-3xl font-bold tracking-tight text-slate-900">Jobs</h2>

@@ -44,7 +44,7 @@ export default function Calendar() {
     .filter((note): note is string => Boolean(note));
 
   return (
-    <div className="space-y-6 pb-24 md:pb-0">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold tracking-tight text-slate-900">Calendar</h2>
         <div className="flex items-center gap-4">

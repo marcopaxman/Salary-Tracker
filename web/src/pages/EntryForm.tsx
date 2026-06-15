@@ -7,8 +7,9 @@ import { useJobs } from '../hooks/useJobs';
 import { useEntries, isEntryActive } from '../hooks/useEntries';
 import { useSettings, CURRENCIES } from '../hooks/useSettings';
 import type { FirestoreDailyEntry } from '../types';
-import { ArrowLeft, Save, Calendar, DollarSign, Clock, FileText, Briefcase, Archive, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Save, Calendar, DollarSign, Clock, FileText, Briefcase, Archive, RotateCcw, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
+import ConfirmModal from '../components/ConfirmModal';
 
 export default function EntryForm() {
   const { id } = useParams(); // id is the date string (YYYY-MM-DD)
@@ -22,6 +23,8 @@ export default function EntryForm() {
   const [initialLoading, setInitialLoading] = useState(!!id);
   const [error, setError] = useState('');
   const [isArchived, setIsArchived] = useState(false);
+  const [showArchiveModal, setShowArchiveModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   // Form State
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -133,7 +136,7 @@ export default function EntryForm() {
   }
 
   async function handleDeactivate() {
-    if (!id || !window.confirm('Deactivate this entry? It will be archived and excluded from dashboard calculations.')) return;
+    if (!id) return;
     setLoading(true);
     try {
         await deactivateEntry(id);
@@ -141,6 +144,19 @@ export default function EntryForm() {
     } catch (err) {
         console.error(err);
         setError('Failed to deactivate entry');
+        setLoading(false);
+    }
+  }
+
+  async function handlePermanentDelete() {
+    if (!id) return;
+    setLoading(true);
+    try {
+        await deleteEntry(id);
+        navigate('/dashboard/entries');
+    } catch (err) {
+        console.error(err);
+        setError('Failed to delete entry');
         setLoading(false);
     }
   }
@@ -180,7 +196,7 @@ export default function EntryForm() {
   const currencySymbol = CURRENCIES.find(c => c.code === settings.currency)?.symbol || '€';
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6 pb-24 md:pb-0">
+    <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center gap-4">
         <button 
            onClick={() => navigate('/dashboard/entries')}
@@ -338,40 +354,72 @@ export default function EntryForm() {
             </div>
         </div>
 
-        <div className="pt-4 flex items-center justify-between gap-4">
+        <div className="pt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             {id && !isArchived ? (
                 <button
                     type="button"
-                    onClick={handleDeactivate}
+                    onClick={() => setShowArchiveModal(true)}
                     disabled={loading}
-                    className="flex items-center gap-2 px-4 py-2.5 text-red-600 font-medium hover:bg-red-50 border border-red-200 rounded-xl transition-colors disabled:opacity-50"
+                    className="flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-2.5 text-amber-700 font-medium hover:bg-amber-50 border border-amber-200 rounded-xl transition-colors disabled:opacity-50 order-3 sm:order-1"
                 >
                     <Archive size={18} />
-                    <span>Deactivate</span>
+                    <span>Archive</span>
                 </button>
-            ) : (
-                <div />
-            )}
-            <div className="flex items-center gap-4">
+            ) : id && isArchived ? (
                 <button
                     type="button"
-                    onClick={() => navigate('/dashboard/entries')}
-                    className="px-6 py-2.5 text-slate-600 font-medium hover:bg-slate-100 rounded-xl transition-colors"
+                    onClick={() => setShowDeleteModal(true)}
+                    disabled={loading}
+                    className="flex items-center justify-center gap-2 w-full sm:w-auto px-4 py-2.5 text-red-600 font-medium hover:bg-red-50 border border-red-200 rounded-xl transition-colors disabled:opacity-50 order-3 sm:order-1"
                 >
-                    Cancel
+                    <Trash2 size={18} />
+                    <span>Delete Permanently</span>
                 </button>
+            ) : (
+                <div className="hidden sm:block" />
+            )}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4 w-full sm:w-auto order-1 sm:order-2">
                 <button
                     type="submit"
                     disabled={loading}
-                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-2.5 rounded-xl font-bold shadow-lg shadow-blue-600/20 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center justify-center gap-2 w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-8 py-2.5 rounded-xl font-bold shadow-lg shadow-blue-600/20 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed order-1"
                 >
                     <Save size={20} />
                     <span>{loading ? 'Saving...' : 'Save Entry'}</span>
+                </button>
+                <button
+                    type="button"
+                    onClick={() => navigate('/dashboard/entries')}
+                    className="w-full sm:w-auto px-6 py-2.5 text-slate-600 font-medium hover:bg-slate-100 rounded-xl transition-colors order-2"
+                >
+                    Cancel
                 </button>
             </div>
         </div>
 
       </form>
+
+      <ConfirmModal
+        open={showArchiveModal}
+        title="Archive this entry?"
+        message="This entry will be moved to your archived list and excluded from dashboard calculations. You can reactivate it later."
+        confirmLabel="Archive Entry"
+        variant="warning"
+        loading={loading}
+        onConfirm={handleDeactivate}
+        onCancel={() => setShowArchiveModal(false)}
+      />
+
+      <ConfirmModal
+        open={showDeleteModal}
+        title="Permanently delete this entry?"
+        message={`This will permanently remove the entry for ${getDisplayDate(date)}. This action cannot be undone.`}
+        confirmLabel="Delete Permanently"
+        variant="danger"
+        loading={loading}
+        onConfirm={handlePermanentDelete}
+        onCancel={() => setShowDeleteModal(false)}
+      />
     </div>
   );
 }

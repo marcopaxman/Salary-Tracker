@@ -8,6 +8,8 @@ export interface UserSettings {
     notificationsEnabled: boolean;
     hourlyRate: number;
     commissionPercent: number;
+    /** Payroll months the user has closed (YYYY-MM). */
+    closedMonths?: string[];
 }
 
 export const CURRENCIES = [

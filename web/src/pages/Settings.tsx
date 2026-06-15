@@ -49,7 +49,7 @@ export default function Settings() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-8 pb-24 md:pb-0">
+    <div className="max-w-3xl mx-auto space-y-8">
       <div>
         <h2 className="text-3xl font-bold tracking-tight text-slate-900">Settings</h2>
         <p className="text-slate-500 mt-1">Manage your account and preferences</p>

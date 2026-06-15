@@ -64,3 +64,5 @@ firebase.json
 .firebaserc
 .firebase
 public
+web/skills-lock.json
+web/.agents

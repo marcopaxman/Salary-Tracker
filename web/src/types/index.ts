@@ -8,6 +8,8 @@ export interface FirestoreDailyEntry {
     jobId?: string; // Stringified Long
     hoursWorked?: number;
     active?: boolean;
+    /** Payroll month this entry counts toward (YYYY-MM). Defaults to calendar month of date. */
+    payrollMonth?: string;
     createdAt: number;
     updatedAt: number;
 }

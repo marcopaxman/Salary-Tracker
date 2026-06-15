@@ -76,7 +76,24 @@ export function useEntries() {
         await deleteDoc(doc(db, 'users', currentUser.uid, 'entries', entryId));
     }, [currentUser]);
 
-    return { entries, inactiveEntries, loading, error, deactivateEntry, reactivateEntry, deleteEntry };
+    const updateEntryPayrollMonth = useCallback(async (entryId: string, payrollMonth: string | null) => {
+        if (!currentUser) return;
+        if (payrollMonth) {
+            await setDoc(
+                doc(db, 'users', currentUser.uid, 'entries', entryId),
+                { payrollMonth, updatedAt: Date.now() },
+                { merge: true }
+            );
+        } else {
+            await setDoc(
+                doc(db, 'users', currentUser.uid, 'entries', entryId),
+                { payrollMonth: null, updatedAt: Date.now() },
+                { merge: true }
+            );
+        }
+    }, [currentUser]);
+
+    return { entries, inactiveEntries, loading, error, deactivateEntry, reactivateEntry, deleteEntry, updateEntryPayrollMonth };
 }
 
 export function useRecentEntries(limitCount = 5) {
